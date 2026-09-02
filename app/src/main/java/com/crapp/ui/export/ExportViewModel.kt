@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -21,7 +22,8 @@ import java.time.ZoneId
 data class ExportUiState(
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
-    val isExporting: Boolean = false
+    val isExporting: Boolean = false,
+    val hasAnyData: Boolean = true
 )
 
 class ExportViewModel(application: Application) : AndroidViewModel(application) {
@@ -38,6 +40,16 @@ class ExportViewModel(application: Application) : AndroidViewModel(application) 
     // exactly once per export, not replay on every recomposition/subscription.
     private val _shareIntent = Channel<Intent>(Channel.BUFFERED)
     val shareIntent: Flow<Intent> = _shareIntent.receiveAsFlow()
+
+    init {
+        // Nothing to export yet -- disable the button rather than share three
+        // empty (header-only) CSVs.
+        viewModelScope.launch {
+            combine(bowelRepo.allMovements, foodRepo.allFoodEntries, medRepo.allEntries) { m, f, med ->
+                m.isNotEmpty() || f.isNotEmpty() || med.isNotEmpty()
+            }.collect { hasAnyData -> _uiState.update { it.copy(hasAnyData = hasAnyData) } }
+        }
+    }
 
     fun setStartDate(date: LocalDate?) = _uiState.update { it.copy(startDate = date) }
 

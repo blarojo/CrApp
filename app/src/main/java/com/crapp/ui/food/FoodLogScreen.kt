@@ -85,6 +85,13 @@ fun FoodLogScreen(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
+                    if (foods.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("No foods logged yet", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            onClick = {},
+                            enabled = false
+                        )
+                    }
                     foods.forEach { food ->
                         DropdownMenuItem(
                             text = { Text(food.name) },
@@ -145,7 +152,10 @@ fun FoodLogScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmAddNewFood) { Text("Add") }
+                TextButton(
+                    onClick = viewModel::confirmAddNewFood,
+                    enabled = uiState.newFoodName.isNotBlank()
+                ) { Text("Add") }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.onShowAddNewDialog(false) }) { Text("Cancel") }

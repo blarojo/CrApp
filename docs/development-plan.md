@@ -197,11 +197,19 @@ writes them to app-scoped cache and hands them off via `FileProvider` +
 optional date range (defaults to all time); reachable from the Home screen and from
 an "Export" action on the History screen.
 
-**Phase 5 — Polish** ⬜ Not started
+**Phase 5 — Polish** ✅ Complete
 
-Empty states, basic input validation, app icon, dark mode support (Compose Material 3
-gives this close to free), simple home screen with today's summary (movement count,
-last logged time).
+Home screen now shows a today's-summary card (bowel movement count, last-logged
+relative time, and secondary food/medication counts) backed by `HomeViewModel`, with
+an empty state before anything's been logged. Added light input-validation/empty-state
+touches: the food picker shows "No foods logged yet" and disables "Add" until a name
+is entered, and Export disables its button (with an explanatory message) when there's
+no data yet rather than sharing empty CSVs — on top of the validation already in place
+from Phase 2 (Save disabled without a selected food / medication name) and the History
+empty state from Phase 3. Replaced the placeholder launcher icon with a paw-print
+adaptive icon. Dark mode already came near-free from Compose Material 3 (dynamic
+color + light/dark schemes in `CrAppTheme`); added a `values-night` base theme so the
+pre-Compose cold-start window background matches too.
 
 **Phase 6 — On-device install & real-world testing** ⬜ Not started
 

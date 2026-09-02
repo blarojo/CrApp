@@ -74,22 +74,29 @@ fun ExportScreen(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Text("Date range (optional — defaults to all time)", style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { showStartPicker = true }) {
-                    Text(uiState.startDate?.format(dateFormatter) ?: "From")
-                }
-                OutlinedButton(onClick = { showEndPicker = true }) {
-                    Text(uiState.endDate?.format(dateFormatter) ?: "To")
-                }
-                if (uiState.startDate != null || uiState.endDate != null) {
-                    TextButton(onClick = viewModel::clearDateRange) { Text("Clear") }
+            if (!uiState.hasAnyData) {
+                Text(
+                    "Nothing logged yet — there's nothing to export.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                Text("Date range (optional — defaults to all time)", style = MaterialTheme.typography.titleSmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { showStartPicker = true }) {
+                        Text(uiState.startDate?.format(dateFormatter) ?: "From")
+                    }
+                    OutlinedButton(onClick = { showEndPicker = true }) {
+                        Text(uiState.endDate?.format(dateFormatter) ?: "To")
+                    }
+                    if (uiState.startDate != null || uiState.endDate != null) {
+                        TextButton(onClick = viewModel::clearDateRange) { Text("Clear") }
+                    }
                 }
             }
 
             Button(
                 onClick = viewModel::export,
-                enabled = !uiState.isExporting,
+                enabled = !uiState.isExporting && uiState.hasAnyData,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (uiState.isExporting) "Exporting…" else "Export & Share")

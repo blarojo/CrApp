@@ -1,0 +1,9 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      Dark-mode base theme. Compose (CrAppTheme) drives all real in-app theming;
+      this only sets the window background the system paints before Compose's
+      first frame (cold start / activity recreation), so it doesn't flash light
+      when the device is in dark mode.
+    -->
+    <style name="Theme.CrApp" parent="android:Theme.Material.NoActionBar" />
+</resources>
