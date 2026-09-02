@@ -253,6 +253,9 @@ Phase 5 onward is refinement.
 4. Alternative to USB: **wireless debugging** (Developer options → Wireless debugging →
    pair with QR/code) — same workflow, no cable.
 
+See [install-on-phone.md](install-on-phone.md) for the full step-by-step walkthrough
+of this (one-time phone setup, connecting, troubleshooting).
+
 ### 9.3 Manual debug install via command line (optional)
 ```
 adb devices                 # confirm phone is detected
