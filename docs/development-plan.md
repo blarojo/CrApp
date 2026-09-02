@@ -166,36 +166,36 @@ prefer testing on the physical device from day one (see §9).
 
 ## 7. Development Phases
 
-**Phase 0 — Scaffolding**
+**Phase 0 — Scaffolding** ✅ Complete
 Empty Compose project builds and runs on-device. Git repo initialized.
 
-**Phase 1 — Data layer**
+**Phase 1 — Data layer** ✅ Complete
 Room entities (`BowelMovement`, `Food`, `FoodEntry`, `MedicationEntry`), DAOs with
 insert/update/delete/query-all-as-Flow, `AppDatabase` singleton, repository layer.
 Unit-test DAOs with an in-memory Room database.
 
-**Phase 2 — Logging screens**
+**Phase 2 — Logging screens** ✅ Complete
 Three entry forms (bowel movement, food, medication), each backed by a `ViewModel`.
 Fast-entry UX matters most here: sensible defaults (timestamp = now), minimal required
 fields, big touch targets, one thumb usable. Food entry uses the dropdown + "Add new"
 flow described in §3, backed by the `food` catalog table.
 
-**Phase 3 — History view**
+**Phase 3 — History view** ⬜ Not started
 Combined, reverse-chronological list of all entry types with icons/color-coding by
 type, filter by type and date range, tap to edit, swipe or long-press to delete.
 
-**Phase 4 — CSV export**
+**Phase 4 — CSV export** ⬜ Not started
 `CsvWriter` that serializes all three tables (or a date-filtered subset) into a single
 CSV (or one file per table — decide once the shape of the data is clearer). Wire to
 `ACTION_CREATE_DOCUMENT` so the user picks where to save, and/or `ACTION_SEND` to push
 straight to email/Drive/Messages.
 
-**Phase 5 — Polish**
+**Phase 5 — Polish** ⬜ Not started
 Empty states, basic input validation, app icon, dark mode support (Compose Material 3
 gives this close to free), simple home screen with today's summary (movement count,
 last logged time).
 
-**Phase 6 — On-device install & real-world testing**
+**Phase 6 — On-device install & real-world testing** ⬜ Not started
 Sideload to phone (see §9), use it for real for a few days, fix friction points found
 through actual use — this is more valuable than synthetic testing given the app's
 purpose.
