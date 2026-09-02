@@ -146,11 +146,20 @@ just a rollup of the first, so one schema change covers both.
   count per day/week, joinable with the existing dashboard trend charts (Phase 7).
 - **Open questions:** should "walk" location also require/allow a walk-time entry (see
   spec 5 below), or stay independent? Recommend independent — not every walk poo comes
-  from a walker-logged walk.
+  from a walker-logged walk. **Resolved (see spec 5):** `location == WALK` on an
+  individually-logged movement and a spec 5 `walk_entry` summary are both kept, used
+  for two different situations (the user personally walking and logging each
+  movement, vs. the dog walker reporting only a count) — not double-entered for the
+  same walk. The app doesn't enforce this; see spec 5's UI warning.
 
 ### 4. Energy level logging
 
 Covers *"Store and show her energy levels."*
+
+**Build together with spec 5 (walker-logged walk summary):** both are the same shape
+of work — a small new entity, a one-field-plus-notes log screen, a `+` menu entry,
+CSV/backup wiring — so implement the "simple log type" scaffolding once and reuse it
+for both rather than deriving the pattern twice.
 
 - **Data model:** new entity `energy_entry`, same shape as `medication_entry`:
 
@@ -200,6 +209,11 @@ Covers *"When the dog walker walks her we only get information of how many poos.
 an option on the + menu to add a walk info (just time of walk and number of bowel
 movements)."*
 
+**Build together with spec 4 (energy level logging):** both are the same shape of
+work — a small new entity, a one-field-plus-notes log screen, a `+` menu entry,
+CSV/backup wiring — so implement the "simple log type" scaffolding once and reuse it
+for both rather than deriving the pattern twice.
+
 - **Data model:** new entity `walk_entry`:
 
   | Field | Type | Notes |
@@ -217,11 +231,19 @@ movements)."*
   to Bowel/Food/Medication; a minimal screen with just a time picker (defaults to now)
   and a number stepper for movement count.
 - **History/dashboard:** walk entries show in History as their own row type; dashboard
-  can roll up "walk movements" from here instead of (or in addition to) spec 3's
-  `location == "walk"` flag on individually-logged movements. **This overlaps with
-  spec 3 and needs a decision**: are walker-reported counts kept as a separate summary
-  row (this spec), or reconciled into `location` on real `bowel_movement` rows? Doing
-  both risks double-counting on the dashboard.
+  rolls up "walk movements" from here, kept **separate from and additive to** spec 3's
+  `location == WALK` flag on individually-logged movements rather than merged into it.
+- **Resolved — coexistence, not merge:** this entry is specifically for the dog
+  walker's report (a count only, no per-movement detail); when the user herself walks
+  the dog and logs each movement individually, she tags those with `location == WALK`
+  (spec 3) instead of also adding a `walk_entry` for the same walk. The two paths cover
+  two different real situations (who did the walking / how much detail is available),
+  so both stay in the data model — the risk is the user accidentally logging the same
+  walk both ways, not the schema needing to pick one. The app doesn't enforce this
+  programmatically (no way to know "this walk was already logged the other way"); add
+  a small inline warning/reminder on this screen instead, e.g. "Only log this if you
+  didn't already tag individual movements as 'Walk' for this outing," so the choice is
+  visible at the moment of logging rather than relying on memory alone.
 - **Export:** add to CSV export and `BackupSerializer`, same as spec 4.
 
 ### 6. Wear OS companion app
