@@ -4,6 +4,7 @@ package com.crapp.ui.nav
 object Routes {
     const val HOME = "home"
     const val HISTORY = "history"
+    const val EXPORT = "export"
 
     const val LOG_BOWEL_MOVEMENT_PATTERN = "log_bowel_movement?id={id}"
     const val LOG_FOOD_PATTERN = "log_food?id={id}"

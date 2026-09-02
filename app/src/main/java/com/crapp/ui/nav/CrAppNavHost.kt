@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.crapp.ui.bowel.BowelMovementLogScreen
+import com.crapp.ui.export.ExportScreen
 import com.crapp.ui.food.FoodLogScreen
 import com.crapp.ui.history.HistoryScreen
 import com.crapp.ui.home.HomeScreen
@@ -27,7 +28,8 @@ fun CrAppNavHost(modifier: Modifier = Modifier) {
                 onLogBowelMovement = { navController.navigate(Routes.logBowelMovement()) },
                 onLogFood = { navController.navigate(Routes.logFood()) },
                 onLogMedication = { navController.navigate(Routes.logMedication()) },
-                onViewHistory = { navController.navigate(Routes.HISTORY) }
+                onViewHistory = { navController.navigate(Routes.HISTORY) },
+                onExport = { navController.navigate(Routes.EXPORT) }
             )
         }
         composable(Routes.HISTORY) {
@@ -35,8 +37,12 @@ fun CrAppNavHost(modifier: Modifier = Modifier) {
                 onBack = { navController.popBackStack() },
                 onEditBowelMovement = { id -> navController.navigate(Routes.logBowelMovement(id)) },
                 onEditFood = { id -> navController.navigate(Routes.logFood(id)) },
-                onEditMedication = { id -> navController.navigate(Routes.logMedication(id)) }
+                onEditMedication = { id -> navController.navigate(Routes.logMedication(id)) },
+                onExport = { navController.navigate(Routes.EXPORT) }
             )
+        }
+        composable(Routes.EXPORT) {
+            ExportScreen(onBack = { navController.popBackStack() })
         }
         composable(
             Routes.LOG_BOWEL_MOVEMENT_PATTERN,

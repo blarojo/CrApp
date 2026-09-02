@@ -188,12 +188,14 @@ flow described in §3, backed by the `food` catalog table.
 Combined, reverse-chronological list of all entry types with icons/color-coding by
 type, filter by type and date range, tap to edit, swipe or long-press to delete.
 
-**Phase 4 — CSV export** ⬜ Not started
+**Phase 4 — CSV export** ✅ Complete
 
-`CsvWriter` that serializes all three tables (or a date-filtered subset) into a single
-CSV (or one file per table — decide once the shape of the data is clearer). Wire to
-`ACTION_CREATE_DOCUMENT` so the user picks where to save, and/or `ACTION_SEND` to push
-straight to email/Drive/Messages.
+`CsvWriter` serializes each of the three tables (bowel movements, food entries with
+food name/brand resolved, medications) to its own RFC 4180-escaped CSV. `CsvExporter`
+writes them to app-scoped cache and hands them off via `FileProvider` +
+`Intent.ACTION_SEND_MULTIPLE` to the share sheet. A dedicated Export screen offers an
+optional date range (defaults to all time); reachable from the Home screen and from
+an "Export" action on the History screen.
 
 **Phase 5 — Polish** ⬜ Not started
 

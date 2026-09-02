@@ -56,6 +56,7 @@ fun HistoryScreen(
     onEditBowelMovement: (Long) -> Unit,
     onEditFood: (Long) -> Unit,
     onEditMedication: (Long) -> Unit,
+    onExport: () -> Unit,
     viewModel: HistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -67,7 +68,8 @@ fun HistoryScreen(
         topBar = {
             TopAppBar(
                 title = { Text("History") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("← Back") } }
+                navigationIcon = { TextButton(onClick = onBack) { Text("← Back") } },
+                actions = { TextButton(onClick = onExport) { Text("Export") } }
             )
         }
     ) { innerPadding ->

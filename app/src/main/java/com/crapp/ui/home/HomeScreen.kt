@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ fun HomeScreen(
     onLogFood: () -> Unit,
     onLogMedication: () -> Unit,
     onViewHistory: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
@@ -43,6 +45,9 @@ fun HomeScreen(
             }
             Button(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
                 Text("View History")
+            }
+            OutlinedButton(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
+                Text("Export to CSV")
             }
         }
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Exposes only the cache/exports/ directory CsvExporter writes to (see
+   app/src/main/java/com/crapp/export/CsvExporter.kt) to the FileProvider; nothing
+   else in app-scoped storage is shared.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="exports" path="exports/" />
+</paths>
