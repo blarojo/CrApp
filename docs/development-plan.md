@@ -45,6 +45,7 @@ dropdown instead of retyped every time. Each row is independently timestamped an
 editable.
 
 **`bowel_movement`**
+
 | Field | Type | Notes |
 |---|---|---|
 | id | Long (PK, autogenerate) | |
@@ -56,6 +57,7 @@ editable.
 | notes | String? | free text |
 
 **`food`** — catalog of known foods, built up as you go
+
 | Field | Type | Notes |
 |---|---|---|
 | id | Long (PK, autogenerate) | |
@@ -63,6 +65,7 @@ editable.
 | brand | String? | optional |
 
 **`food_entry`**
+
 | Field | Type | Notes |
 |---|---|---|
 | id | Long (PK, autogenerate) | |
@@ -81,6 +84,7 @@ flow. This also gives the future ingredient-insights feature (see
 later, without needing a schema change.
 
 **`medication_entry`**
+
 | Field | Type | Notes |
 |---|---|---|
 | id | Long (PK, autogenerate) | |

@@ -6,6 +6,7 @@ into active development as needed.
 
 ## Backlog
 
+- [ ] Ensure we have a way to backup an wipe the data from the app screen, maybe add an admin screen
 - [ ] **Good DevEx and snappy UI design** — keep the app fast and pleasant to build on
   and use: quick Gradle build/iteration times, minimal boilerplate, responsive Compose
   UI with no jank on the logging screens (these get used multiple times a day, so any

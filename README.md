@@ -7,8 +7,10 @@ no backend, no account system.
 
 ## Status
 
-Phase 0 complete: the project scaffold builds (Kotlin + Jetpack Compose, Room wired
-up for the next phase). No data layer or logging screens yet — see
+Phase 2 complete: the Room data layer (Phase 1) and the three logging screens —
+bowel movement, food (dropdown + "Add new"), and medication (Phase 2) — are built,
+wired to a Navigation Compose graph, and verified end-to-end on a physical device.
+No history/edit view or CSV export yet — see
 [docs/development-plan.md](docs/development-plan.md) §7 for the phased build order.
 
 ## Tech stack
