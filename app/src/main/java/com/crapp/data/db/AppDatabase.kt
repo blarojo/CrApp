@@ -39,17 +39,35 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instance: AppDatabase? = null
 
+        /**
+         * Testing-only escape hatch: when true, [getInstance] hands out a fresh
+         * in-memory database instead of opening the real on-device `crapp.db` file.
+         * Exists so instrumented UI tests (app/src/androidTest/java/com/crapp/ui) that
+         * launch the real `MainActivity`/`CrAppApplication` can't write test data into
+         * a real install's actual logged data. Assigning this always drops the cached
+         * [instance] so the next [getInstance] call rebuilds under the new mode --
+         * production code must never set this.
+         */
+        @Volatile
+        var useInMemoryDatabaseForTesting: Boolean = false
+            set(value) {
+                field = value
+                instance = null
+            }
+
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
-                instance ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    DATABASE_NAME
-                )
+                instance ?: buildDatabase(context.applicationContext).also { instance = it }
+            }
+
+        private fun buildDatabase(appContext: Context): AppDatabase =
+            if (useInMemoryDatabaseForTesting) {
+                Room.inMemoryDatabaseBuilder(appContext, AppDatabase::class.java).build()
+            } else {
+                Room.databaseBuilder(appContext, AppDatabase::class.java, DATABASE_NAME)
                     .addMigrations(MIGRATION_1_2)
                     .addCallback(SeedDataCallback)
                     .build()
-                    .also { instance = it }
             }
     }
 }
@@ -58,9 +76,11 @@ abstract class AppDatabase : RoomDatabase() {
  * Pre-populates the food catalog on a brand-new install only -- `onCreate` fires
  * exactly once, when the database file doesn't exist yet, so an existing install
  * upgrading (via [MIGRATION_1_2] instead) never gets these inserted alongside its
- * real data. See [SEED_FOODS].
+ * real data. See [SEED_FOODS]. Internal rather than private so SeedDataCallbackTest
+ * (app/src/androidTest) can attach it to its own disposable in-memory database,
+ * without touching [AppDatabase.getInstance]'s real-file path at all.
  */
-private object SeedDataCallback : RoomDatabase.Callback() {
+internal object SeedDataCallback : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
         SEED_FOODS.forEach { seed ->

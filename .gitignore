@@ -29,3 +29,5 @@ Thumbs.db
 # Claude Code local settings (machine-specific permission allowlist) --
 # .claude/skills/ and other shared project assets are still tracked.
 .claude/settings.local.json
+
+.tmp2

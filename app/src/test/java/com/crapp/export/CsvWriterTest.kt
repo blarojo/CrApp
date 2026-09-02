@@ -15,6 +15,19 @@ class CsvWriterTest {
     private val zone = ZoneOffset.UTC
 
     @Test
+    fun allThreeWriters_omittedZoneArgument_usesSystemDefaultWithoutThrowing() {
+        // Exercises the default-parameter (zone = ZoneId.systemDefault()) overload
+        // specifically -- every other test passes zone explicitly.
+        val movement = BowelMovement(id = 1, timestamp = Instant.parse("2026-09-01T08:30:00Z"), consistency = 6)
+        val entry = FoodEntry(id = 1, timestamp = Instant.parse("2026-09-01T12:00:00Z"), foodId = 1, mealType = MealType.MEAL)
+        val medication = MedicationEntry(id = 1, timestamp = Instant.parse("2026-09-01T09:00:00Z"), name = "Metronidazole")
+
+        assertEquals(2, CsvWriter.bowelMovementsCsv(listOf(movement)).split("\r\n").size - 1)
+        assertEquals(2, CsvWriter.foodEntriesCsv(listOf(entry), emptyMap()).split("\r\n").size - 1)
+        assertEquals(2, CsvWriter.medicationEntriesCsv(listOf(medication)).split("\r\n").size - 1)
+    }
+
+    @Test
     fun bowelMovementsCsv_headerAndRows() {
         val movements = listOf(
             BowelMovement(
