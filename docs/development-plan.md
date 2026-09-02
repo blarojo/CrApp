@@ -211,11 +211,14 @@ adaptive icon. Dark mode already came near-free from Compose Material 3 (dynamic
 color + light/dark schemes in `CrAppTheme`); added a `values-night` base theme so the
 pre-Compose cold-start window background matches too.
 
-**Phase 6 — On-device install & real-world testing** ⬜ Not started
+**Phase 6 — On-device install & real-world testing** 🔄 In progress
 
-Sideload to phone (see §9), use it for real for a few days, fix friction points found
-through actual use — this is more valuable than synthetic testing given the app's
-purpose.
+Sideloaded via `adb install -r` (see §9.3) and verified on-device: Home's today
+summary, History, and Export (share sheet correctly bundles all 3 CSVs; file content
+checked against the on-device data) all work against real logged data. The app was
+already installed and in use before this pass, with real entries logged. What's left
+is open-ended: keep using it for a few days and fix whatever friction turns up — more
+valuable than synthetic testing given the app's purpose.
 
 Phases are sequential but each is small; expect Phases 0–4 to be a working, useful app.
 Phase 5 onward is refinement.
