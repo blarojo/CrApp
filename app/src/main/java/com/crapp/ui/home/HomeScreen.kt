@@ -3,22 +3,32 @@ package com.crapp.ui.home
 import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.crapp.ui.common.AddEntryFab
+import com.crapp.ui.common.AddEntryOption
+import com.crapp.ui.common.ConsistencyTrendChart
+import com.crapp.ui.common.FrequencyBarChart
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onLogBowelMovement: () -> Unit,
@@ -31,34 +41,64 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("CrApp") },
+                actions = {
+                    TextButton(onClick = onViewHistory) { Text("History") }
+                    TextButton(onClick = onExport) { Text("Export") }
+                }
+            )
+        },
+        floatingActionButton = {
+            AddEntryFab(
+                options = listOf(
+                    AddEntryOption("Bowel Movement", onLogBowelMovement),
+                    AddEntryOption("Food", onLogFood),
+                    AddEntryOption("Medication", onLogMedication)
+                )
+            )
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(24.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(text = "CrApp", style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Bowel movement, food & medication tracker")
+            Text(
+                "Bowel movement, food & medication tracker",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             TodaySummaryCard(uiState)
 
-            Button(onClick = onLogBowelMovement, modifier = Modifier.fillMaxWidth()) {
-                Text("Log Bowel Movement")
+            if (uiState.hasAnyEntries) {
+                DashboardCard(title = "Consistency trend") {
+                    ConsistencyTrendChart(points = uiState.consistencyTrend, modifier = Modifier.fillMaxWidth())
+                }
+                DashboardCard(title = "Movements per day") {
+                    FrequencyBarChart(days = uiState.dailyFrequency, modifier = Modifier.fillMaxWidth())
+                }
             }
-            Button(onClick = onLogFood, modifier = Modifier.fillMaxWidth()) {
-                Text("Log Food")
-            }
-            Button(onClick = onLogMedication, modifier = Modifier.fillMaxWidth()) {
-                Text("Log Medication")
-            }
-            Button(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
-                Text("View History")
-            }
-            OutlinedButton(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
-                Text("Export to CSV")
-            }
+
+            // Keeps the last card clear of the floating action button.
+            Spacer(Modifier.height(72.dp))
+        }
+    }
+}
+
+@Composable
+private fun DashboardCard(title: String, content: @Composable () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            content()
         }
     }
 }
@@ -68,7 +108,7 @@ private fun TodaySummaryCard(uiState: HomeUiState) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (!uiState.hasAnyEntries) {
-                Text("No entries yet — log your first one below.", style = MaterialTheme.typography.bodyMedium)
+                Text("No entries yet — tap + to log your first one.", style = MaterialTheme.typography.bodyMedium)
             } else {
                 val movementLabel = when (uiState.bowelMovementsToday) {
                     0 -> "No bowel movements logged today"

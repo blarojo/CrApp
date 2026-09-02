@@ -33,7 +33,8 @@ into active development as needed.
 - Multi-dog support (would require introducing a `Dog` entity and scoping all queries).
 - Structured dose/amount fields (numeric + unit) once real usage data shows the free
   text fields are limiting analysis.
-- Simple in-app trend charts (movements per day, consistency over time) without
-  needing the full Claude-analysis pipeline.
 - Backup/restore of the local database (e.g. export/import the Room DB file directly)
   in case of phone loss or reset.
+- Tap-to-inspect on the Phase 7 dashboard charts (exact date/value on tap, since a
+  touch device has no hover) and a longer/adjustable time window than the current
+  fixed last-14-points / last-7-days.
