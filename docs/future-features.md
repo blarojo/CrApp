@@ -13,6 +13,8 @@ into active development as needed.
 
 ## Other ideas worth considering later
 
+- Add an amount-of-poo scale to bowel movement entries: 1 = some drips, 2 = medium
+  amount, 3 = a lot of poo.
 - Store whether poos were in a walk or at home or at night to compare data
 - Display how many times she got up at night and how many poos she did on a walk - may be overlap with 1st
 - Store and show her energy levels
@@ -20,6 +22,10 @@ into active development as needed.
 - Android watch feature - Add functionality for me to be able to enter data on an app on my watch. When opened, it should just display the poo icon, number of bowel movements on a given day and a + sign to add bowel movements. Food and the rest can be added only from the phone app.
 - Reminders/notifications (e.g. "no movement logged in over 24h").
 - Photo attachment on bowel movement entries.
+- Structure the ingredient lists for the 4 currently-defined foods (looked up online
+  and already stored as free text in Phase 8's `SeedFoods.kt`) into discrete,
+  queryable ingredients per food, so a future feature can infer allergy/trigger
+  correlations from individual ingredients rather than free-text blobs.
 - Photo-based ingredient capture (OCR a label photo) for the Food Catalog, on top of
   the manual/pasted-text entry added in Phase 8 — needs a camera + text-recognition
   capability (e.g. ML Kit), a real dependency addition, so deferred until the
@@ -38,7 +44,68 @@ Nothing here is scheduled or approved; review and cut/edit before any of it gets
 promoted into `development-plan.md`. Specs are grouped by the schema/entity they'd
 touch, since several turn out to be facets of the same change.
 
-### 1. Bowel movement context: location + time-of-day
+### 1. Bowel movement amount
+
+Covers *"Add amount of poo to bowel movement. It should have a scale of 1 to 3, being:
+some drips, medium amount, a lot of poo."*
+
+- **Data model:** add `amount: Amount?` to `bowel_movement` — a fixed 3-value enum,
+  following the same named-level convention established for spec 4's `EnergyLevel`
+  (and spec 3's `Location`) rather than a bare `Int`, since each level already has a
+  specific label given up front:
+
+  ```kotlin
+  enum class Amount(val displayName: String) {
+      SOME_DRIPS("Some drips"),
+      MEDIUM_AMOUNT("Medium amount"),
+      A_LOT("A lot of poo")
+  }
+  ```
+
+  Ordered low → high so it sorts/plots by `ordinal`, same as `EnergyLevel`. Needs a
+  `Converters.kt` type converter, same pattern as the other two enums.
+  - **Nullable, not required:** unlike `consistency` (non-nullable today), `amount`
+    should be optional (`Amount?`) so the migration doesn't have to invent a fabricated
+    value for every already-logged historical row — matches how `color`/`notes` are
+    already optional on the same table. The logging screen can still default-select
+    "Medium amount" on the picker to make logging it feel like the norm, without the
+    column itself being `NOT NULL`.
+  - Requires a Room migration (`MIGRATION_2_3`) — natural to combine with spec 3's
+    location/night-time fields below, since both add columns to `bowel_movement` in
+    the same version bump rather than shipping back-to-back migrations for the same
+    table.
+- **Logging UI:** add a 3-option chip/tap selector to `BowelMovementLogScreen`,
+  alongside the existing consistency 1–7 selector — same tap-first interaction the
+  rest of the logging screen already uses (this app's "snappy UI design" backlog item
+  explicitly calls out avoiding friction on screens used multiple times a day).
+- **History/dashboard:** show the amount label on each History row next to
+  consistency; a dashboard trend line is optional/lower priority than for consistency,
+  since amount is a coarser 3-point read.
+- **Export:** add `amount` (the `displayName`, not the raw enum constant) to CSV
+  export and to `BackupSerializer`.
+- **Open question:** does amount ever move independently of consistency (e.g. a small
+  amount that's still liquid/high on the 1–7 scale)? Likely yes — recommend keeping
+  them as two independent fields rather than deriving one from the other, which is
+  already how this spec is written; flagging it here so that's read as intentional,
+  not an oversight.
+
+### 2. Tap-to-inspect + adjustable dashboard window
+
+- **Tap-to-inspect:** the Phase 7 dashboard trend charts need a tap handler per data
+  point (Compose Canvas hit-testing against the plotted points, or swap to a charting
+  approach that supports it natively) that shows exact date + value, e.g. in a small
+  tooltip/bottom sheet — replacing hover, which touch devices don't have.
+- **Adjustable window:** replace the current fixed "last 14 points" / "last 7 days"
+  windows with a selector (e.g. 7d / 14d / 30d / 90d chip row above each chart,
+  matching the History screen's existing filter-chip UX). Dashboard `ViewModel`s
+  already query by date range for their trend data, so this is mostly a UI + query
+  parameter change, not a schema change.
+- **Data model:** none.
+- **Scope note:** smallest, lowest-risk item in this whole list — pure UI/query work
+  on an existing screen, no migration, no new dependency. Good first pick if picking
+  just one of these twelve to promote into `development-plan.md`.
+
+### 3. Bowel movement context: location + time-of-day
 
 Covers *"Store whether poos were in a walk or at home or at night"* and *"Display how
 many times she got up at night and how many poos she did on a walk"* — the second is
@@ -78,10 +145,10 @@ just a rollup of the first, so one schema change covers both.
 - **History/dashboard:** two new stat tiles — "night movements" and "walk movements" —
   count per day/week, joinable with the existing dashboard trend charts (Phase 7).
 - **Open questions:** should "walk" location also require/allow a walk-time entry (see
-  spec 3 below), or stay independent? Recommend independent — not every walk poo comes
+  spec 5 below), or stay independent? Recommend independent — not every walk poo comes
   from a walker-logged walk.
 
-### 2. Energy level logging
+### 4. Energy level logging
 
 Covers *"Store and show her energy levels."*
 
@@ -98,7 +165,7 @@ Covers *"Store and show her energy levels."*
   clinical Purina consistency scale) and a name is faster to recognize at a glance
   than remembering what a number meant last time. New `EnergyLevel` enum (same
   placement convention as `MealType`), persisted via a `Converters.kt` type converter
-  the same way as spec 1's `Location`:
+  the same way as spec 3's `Location`:
 
   ```kotlin
   enum class EnergyLevel(val displayName: String) {
@@ -127,7 +194,7 @@ Covers *"Store and show her energy levels."*
   simpler `UNIQUE(date)` constraint might be more correct than a plain log table —
   needs a decision before implementing.
 
-### 3. Walker-logged walk summary
+### 5. Walker-logged walk summary
 
 Covers *"When the dog walker walks her we only get information of how many poos. Add
 an option on the + menu to add a walk info (just time of walk and number of bowel
@@ -150,14 +217,14 @@ movements)."*
   to Bowel/Food/Medication; a minimal screen with just a time picker (defaults to now)
   and a number stepper for movement count.
 - **History/dashboard:** walk entries show in History as their own row type; dashboard
-  can roll up "walk movements" from here instead of (or in addition to) spec 1's
+  can roll up "walk movements" from here instead of (or in addition to) spec 3's
   `location == "walk"` flag on individually-logged movements. **This overlaps with
-  spec 1 and needs a decision**: are walker-reported counts kept as a separate summary
+  spec 3 and needs a decision**: are walker-reported counts kept as a separate summary
   row (this spec), or reconciled into `location` on real `bowel_movement` rows? Doing
   both risks double-counting on the dashboard.
-- **Export:** add to CSV export and `BackupSerializer`, same as spec 2.
+- **Export:** add to CSV export and `BackupSerializer`, same as spec 4.
 
-### 4. Wear OS companion app
+### 6. Wear OS companion app
 
 Covers *"Android watch feature — enter data on an app on my watch: poo icon, number of
 bowel movements today, and a + to add one. Food and the rest stay phone-only."*
@@ -187,7 +254,7 @@ bowel movements today, and a + to add one. Food and the rest stay phone-only."*
   memory (backs up real data first) would extend to whatever device pairing is used
   for watch testing too.
 
-### 5. Reminders / notifications
+### 7. Reminders / notifications
 
 Covers *"Reminders/notifications (e.g. 'no movement logged in over 24h')."*
 
@@ -203,14 +270,14 @@ Covers *"Reminders/notifications (e.g. 'no movement logged in over 24h')."*
   permission prompt), plus a notification channel setup in `CrAppApplication`.
 - **UI:** new toggle + threshold picker in `SettingsScreen`. Tapping the notification
   deep-links into the bowel-movement log screen.
-- **Open questions:** should the reminder also consider "night" hours (spec 1) so it
+- **Open questions:** should the reminder also consider "night" hours (spec 3) so it
   doesn't fire a false alarm overnight before a sleeping human could act on it anyway?
 
-### 6. Photo attachment on bowel movement entries
+### 8. Photo attachment on bowel movement entries
 
 - **Data model:** add `photoUri: String?` to `bowel_movement` (stores a reference to
   the image, not the bytes themselves) — another `MIGRATION_2_3`-style schema bump,
-  could potentially combine with spec 1's migration if both are built together.
+  could potentially combine with spec 3's migration if both are built together.
 - **Storage — must NOT be app-private storage.** `context.filesDir` /
   `getExternalFilesDir()` are both deleted the moment the app is uninstalled, which
   defeats the point of a photo log (uninstall/reinstall — e.g. switching phones, or the
@@ -239,7 +306,7 @@ Covers *"Reminders/notifications (e.g. 'no movement logged in over 24h')."*
 - **UI:** camera-or-gallery picker button on `BowelMovementLogScreen` (Android's
   built-in `ActivityResultContracts.TakePicture` targeting a `MediaStore`-issued URI, or
   `PickVisualMedia` for an existing photo — no new library dependency needed, unlike
-  spec 7's OCR ask). Thumbnail shown in the History list row and in an entry's edit
+  spec 11's OCR ask). Thumbnail shown in the History list row and in an entry's edit
   view; tap to view full-size.
 - **Backup/restore:** since `photoUri` is now a stable reference into shared storage
   rather than an app-private path, `BackupRepository`/`BackupSerializer` only need to
@@ -256,46 +323,57 @@ Covers *"Reminders/notifications (e.g. 'no movement logged in over 24h')."*
   worth a one-line mention in Settings/docs so that's an expected tradeoff of "easy to
   find in a file manager," not a surprise.
 
-### 7. Photo-based ingredient capture (OCR)
+### 9. Structured ingredient data for the current food catalog
 
-Already scoped as deferred-until-justified in the original bullet; spec captured here
-so it's ready when that justification shows up.
+Covers *"For the foods we have defined currently (the 4 options I defined) look up
+the ingredients online and store them somewhere so that we have the structure of
+ingredients for a specific food — this will help us infer data for allergies etc."*
 
-- **Dependency:** ML Kit Text Recognition (on-device, no network call — keeps the
-  app's "no backend, no third-party analytics" constraint intact). Real Gradle
-  dependency addition, consistent with why this was deferred.
-- **UI:** on the Food Catalog "Add new" / edit food flow (`ui/foodcatalog`), add a
-  "scan label" button next to the existing manual/pasted-text `ingredients` field.
-  Opens camera, runs ML Kit text recognition on the captured frame, and pre-fills the
-  `ingredients` text field with the recognized text for the user to review/edit before
-  saving — never auto-saves OCR output unreviewed, since label OCR is commonly noisy.
-- **Data model:** none — writes into the existing `Food.ingredients` free-text field.
-- **Prereq:** per the original note, build and ship the manual-entry `ingredients`
-  field's usage first; this spec only becomes worth implementing once that shows
-  photo capture would actually save meaningful time over typing/pasting.
+- **Context:** the lookup itself already happened — `SeedFoods.kt` (Phase 8) already
+  stores each of the 4 seeded foods' online-sourced ingredient list in
+  `Food.ingredients`, as a single free-text comma-separated blob per food (z/d Mini
+  Food Sensitivities dry, z/d Food Sensitivities wet, HA Hypoallergenic Mousse, HA
+  Hypoallergenic Dry — see that file's header comment for the "as of Sept 2026,
+  verify against packaging if it matters" caveat, which still applies here). What's
+  missing for the allergy-inference goal is *structure*: right now correlating "does
+  chicken liver show up in every food she reacted badly to" means string-matching
+  over four free-text blobs, which is fragile and doesn't scale to more foods.
+- **Data model:** two new normalized tables, additive to (not replacing) the existing
+  free-text `Food.ingredients` field — that field stays as the source-of-truth label
+  text / fallback for anything that doesn't cleanly decompose, same "structured is
+  additive" principle as spec 10's dose/amount fields below.
 
-### 8. Multi-dog support
+  | Table | Fields | Notes |
+  |---|---|---|
+  | `ingredient` | id (PK, autogenerate), name (unique) | canonical catalog, e.g. "coconut oil", "hydrolyzed chicken liver" — deduped across foods |
+  | `food_ingredient` | foodId (FK → food.id), ingredientId (FK → ingredient.id), position (Int) | join row per food+ingredient; `position` preserves the label's original order, since pet-food labels list ingredients by descending concentration — that ordering carries real meaning for an allergy read, not just display |
 
-- **Data model:** the big one — introduces a `Dog` entity and a `dogId` FK on
-  `bowel_movement`, `food_entry`, `medication_entry`, and any of the new entities
-  above (`energy_entry`, `walk_entry`) that ship before this does. `Food` (the catalog)
-  and its `ingredients` likely stay dog-independent (a food is a food regardless of
-  which dog ate it), but `FoodEntry` needs `dogId`.
-- **Migration:** substantial — every existing row needs to be backfilled with a
-  single "default" `Dog` row (representing the current dog) so existing data doesn't
-  become orphaned. This is the highest-risk migration of anything in this list; needs
-  its own dedicated migration test (following the existing `MigrationTest.kt` pattern)
-  before ever shipping.
-- **UI:** every log/history/dashboard/export screen needs a dog selector or filter.
-  Given this app started single-dog-single-user by design (see
-  `development-plan.md` §1), this is effectively a second app shape and should be
-  scoped as its own mini development-plan phase rather than a single PR, if it's ever
-  picked up.
-- **Recommendation:** lowest priority in this list unless a second dog is actually
-  imminent — cost is high and every other feature above becomes slightly more complex
-  to build on top of once `dogId` scoping exists everywhere.
+  Another `MIGRATION_2_3`-style schema bump (candidate to combine with specs 3 and 8
+  if several of these ship together).
+- **Populating the 4 current foods:** a one-time backfill, not a migration script —
+  parse each `SeedFood.ingredients` string (split on commas, trim), canonicalize each
+  token, dedupe against existing `ingredient` rows, insert `food_ingredient` rows
+  preserving order. Write this as a small reusable parser (not a one-off script) since
+  any food added later (manual entry, or the OCR spec below) needs the same
+  text-to-structure step applied to its `ingredients` field.
+- **Open question — canonicalization is the hard part:** the 4 existing labels
+  already disagree on naming for the same thing (e.g. Hill's z/d dry lists "Maize
+  starch" while Hill's z/d wet — same manufacturer — lists "Corn starch" for what's
+  functionally the same ingredient). Splitting on commas alone would create duplicate
+  `ingredient` rows for the same real ingredient and quietly break the correlation
+  this feature exists for. Needs a small synonym/alias map (maize=corn, at minimum)
+  reviewed before trusting any allergy inference built on top of it, and a decision on
+  whether generic catch-all phrases like "vitamins and trace elements" become one
+  `ingredient` row (not useful for correlation) or get dropped entirely during parsing.
+- **What this unlocks:** this is what the "infer data for allergies" goal actually
+  needs underneath it — a future insights feature (or an extension of the
+  `crapp-insights` skill) can then query "for every `bowel_movement` with
+  `hasBlood`/`hasMucus`/low consistency, which `ingredient` rows are common across the
+  `food_entry` rows logged in the preceding N hours" instead of pattern-matching free
+  text. Flag this as the concrete consumer that justifies doing the parsing work now
+  rather than speculatively.
 
-### 9. Structured dose/amount fields
+### 10. Structured dose/amount fields
 
 Already scoped as deferred-until-justified in the original bullet.
 
@@ -316,18 +394,41 @@ Already scoped as deferred-until-justified in the original bullet.
   complexity cost — this spec is ready to go whenever that evidence shows up, likely
   surfaced by `crapp-insights` runs that can't cleanly bucket dose amounts.
 
-### 10. Tap-to-inspect + adjustable dashboard window
+### 11. Photo-based ingredient capture (OCR)
 
-- **Tap-to-inspect:** the Phase 7 dashboard trend charts need a tap handler per data
-  point (Compose Canvas hit-testing against the plotted points, or swap to a charting
-  approach that supports it natively) that shows exact date + value, e.g. in a small
-  tooltip/bottom sheet — replacing hover, which touch devices don't have.
-- **Adjustable window:** replace the current fixed "last 14 points" / "last 7 days"
-  windows with a selector (e.g. 7d / 14d / 30d / 90d chip row above each chart,
-  matching the History screen's existing filter-chip UX). Dashboard `ViewModel`s
-  already query by date range for their trend data, so this is mostly a UI + query
-  parameter change, not a schema change.
-- **Data model:** none.
-- **Scope note:** smallest, lowest-risk item in this whole list — pure UI/query work
-  on an existing screen, no migration, no new dependency. Good first pick if picking
-  just one of these ten to promote into `development-plan.md`.
+Already scoped as deferred-until-justified in the original bullet; spec captured here
+so it's ready when that justification shows up.
+
+- **Dependency:** ML Kit Text Recognition (on-device, no network call — keeps the
+  app's "no backend, no third-party analytics" constraint intact). Real Gradle
+  dependency addition, consistent with why this was deferred.
+- **UI:** on the Food Catalog "Add new" / edit food flow (`ui/foodcatalog`), add a
+  "scan label" button next to the existing manual/pasted-text `ingredients` field.
+  Opens camera, runs ML Kit text recognition on the captured frame, and pre-fills the
+  `ingredients` text field with the recognized text for the user to review/edit before
+  saving — never auto-saves OCR output unreviewed, since label OCR is commonly noisy.
+- **Data model:** none — writes into the existing `Food.ingredients` free-text field.
+- **Prereq:** per the original note, build and ship the manual-entry `ingredients`
+  field's usage first; this spec only becomes worth implementing once that shows
+  photo capture would actually save meaningful time over typing/pasting.
+
+### 12. Multi-dog support
+
+- **Data model:** the big one — introduces a `Dog` entity and a `dogId` FK on
+  `bowel_movement`, `food_entry`, `medication_entry`, and any of the new entities
+  above (`energy_entry`, `walk_entry`) that ship before this does. `Food` (the catalog)
+  and its `ingredients` likely stay dog-independent (a food is a food regardless of
+  which dog ate it), but `FoodEntry` needs `dogId`.
+- **Migration:** substantial — every existing row needs to be backfilled with a
+  single "default" `Dog` row (representing the current dog) so existing data doesn't
+  become orphaned. This is the highest-risk migration of anything in this list; needs
+  its own dedicated migration test (following the existing `MigrationTest.kt` pattern)
+  before ever shipping.
+- **UI:** every log/history/dashboard/export screen needs a dog selector or filter.
+  Given this app started single-dog-single-user by design (see
+  `development-plan.md` §1), this is effectively a second app shape and should be
+  scoped as its own mini development-plan phase rather than a single PR, if it's ever
+  picked up.
+- **Recommendation:** lowest priority in this list unless a second dog is actually
+  imminent — cost is high and every other feature above becomes slightly more complex
+  to build on top of once `dogId` scoping exists everywhere.
