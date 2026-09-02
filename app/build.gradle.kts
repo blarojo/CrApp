@@ -43,6 +43,12 @@ android {
     }
 }
 
+ksp {
+    // Persists Room schema history to app/schemas/ (committed to the repo) so future
+    // schema changes can be validated against prior versions for migrations.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
