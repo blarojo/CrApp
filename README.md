@@ -7,10 +7,12 @@ no backend, no account system.
 
 ## Status
 
-Phase 2 complete: the Room data layer (Phase 1) and the three logging screens —
-bowel movement, food (dropdown + "Add new"), and medication (Phase 2) — are built,
-wired to a Navigation Compose graph, and verified end-to-end on a physical device.
-No history/edit view or CSV export yet — see
+Phase 3 complete: the Room data layer (Phase 1), the three logging screens —
+bowel movement, food (dropdown + "Add new"), and medication (Phase 2) — and a
+combined History view (Phase 3) are built, wired to a Navigation Compose graph, and
+verified end-to-end on a physical device. History shows all entries in reverse-
+chronological order with type/date filtering, tap-to-edit, and long-press-to-delete.
+No CSV export yet — see
 [docs/development-plan.md](docs/development-plan.md) §7 for the phased build order.
 
 ## Tech stack

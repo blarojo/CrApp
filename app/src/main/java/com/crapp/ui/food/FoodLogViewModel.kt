@@ -2,6 +2,7 @@ package com.crapp.ui.food
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
 import com.crapp.data.model.Food
@@ -23,17 +24,40 @@ data class FoodLogUiState(
     val amount: String = "",
     val mealType: MealType = MealType.MEAL,
     val showAddNewDialog: Boolean = false,
+    val isEditing: Boolean = false,
     val saved: Boolean = false
 )
 
-class FoodLogViewModel(application: Application) : AndroidViewModel(application) {
+class FoodLogViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
     private val repository = (application as CrAppApplication).foodRepository
+    private val editingId: Long = savedStateHandle.get<Long>("id") ?: -1L
 
     val foodsByRecentUse: StateFlow<List<Food>> = repository.foodsByRecentUse
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _uiState = MutableStateFlow(FoodLogUiState())
+    private val _uiState = MutableStateFlow(FoodLogUiState(isEditing = editingId != -1L))
     val uiState: StateFlow<FoodLogUiState> = _uiState.asStateFlow()
+
+    init {
+        if (editingId != -1L) {
+            viewModelScope.launch {
+                repository.getFoodEntryById(editingId)?.let { entry ->
+                    val food = repository.getFoodById(entry.foodId)
+                    _uiState.update {
+                        it.copy(
+                            timestamp = entry.timestamp,
+                            selectedFood = food,
+                            amount = entry.amount ?: "",
+                            mealType = entry.mealType
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun onTimestampChange(timestamp: Instant) {
         _uiState.update { it.copy(timestamp = timestamp) }
@@ -78,14 +102,22 @@ class FoodLogViewModel(application: Application) : AndroidViewModel(application)
         val state = _uiState.value
         val food = state.selectedFood ?: return
         viewModelScope.launch {
-            repository.logFoodEntry(
-                FoodEntry(
-                    timestamp = state.timestamp,
-                    foodId = food.id,
-                    amount = state.amount.ifBlank { null },
-                    mealType = state.mealType
-                )
+            val entry = FoodEntry(
+                id = if (editingId != -1L) editingId else 0,
+                timestamp = state.timestamp,
+                foodId = food.id,
+                amount = state.amount.ifBlank { null },
+                mealType = state.mealType
             )
+            if (editingId != -1L) repository.updateFoodEntry(entry) else repository.logFoodEntry(entry)
+            _uiState.update { it.copy(saved = true) }
+        }
+    }
+
+    fun delete() {
+        if (editingId == -1L) return
+        viewModelScope.launch {
+            repository.getFoodEntryById(editingId)?.let { repository.deleteFoodEntry(it) }
             _uiState.update { it.copy(saved = true) }
         }
     }

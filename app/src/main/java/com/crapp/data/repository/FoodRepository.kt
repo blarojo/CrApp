@@ -31,6 +31,10 @@ class FoodRepository(
             ?: error("Failed to get or create food '$name'")
     }
 
+    suspend fun getFoodEntryById(id: Long): FoodEntry? = foodEntryDao.getById(id)
+
+    suspend fun getFoodById(id: Long): Food? = foodDao.getById(id)
+
     suspend fun logFoodEntry(entry: FoodEntry): Long = foodEntryDao.insert(entry)
 
     suspend fun updateFoodEntry(entry: FoodEntry) = foodEntryDao.update(entry)

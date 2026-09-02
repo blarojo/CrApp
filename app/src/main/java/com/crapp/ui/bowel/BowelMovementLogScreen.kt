@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,7 +39,16 @@ fun BowelMovementLogScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Log Bowel Movement") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text(if (uiState.isEditing) "Edit Bowel Movement" else "Log Bowel Movement") },
+                actions = {
+                    if (uiState.isEditing) {
+                        TextButton(onClick = viewModel::delete) { Text("Delete") }
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier

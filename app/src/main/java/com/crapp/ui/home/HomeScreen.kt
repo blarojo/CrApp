@@ -18,6 +18,7 @@ fun HomeScreen(
     onLogBowelMovement: () -> Unit,
     onLogFood: () -> Unit,
     onLogMedication: () -> Unit,
+    onViewHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
@@ -39,6 +40,9 @@ fun HomeScreen(
             }
             Button(onClick = onLogMedication, modifier = Modifier.fillMaxWidth()) {
                 Text("Log Medication")
+            }
+            Button(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
+                Text("View History")
             }
         }
     }

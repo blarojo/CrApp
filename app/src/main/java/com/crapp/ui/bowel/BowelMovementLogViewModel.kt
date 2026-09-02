@@ -2,6 +2,7 @@ package com.crapp.ui.bowel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
 import com.crapp.data.model.BowelMovement
@@ -18,14 +19,37 @@ data class BowelMovementLogUiState(
     val hasBlood: Boolean = false,
     val hasMucus: Boolean = false,
     val notes: String = "",
+    val isEditing: Boolean = false,
     val saved: Boolean = false
 )
 
-class BowelMovementLogViewModel(application: Application) : AndroidViewModel(application) {
+class BowelMovementLogViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
     private val repository = (application as CrAppApplication).bowelMovementRepository
+    private val editingId: Long = savedStateHandle.get<Long>("id") ?: -1L
 
-    private val _uiState = MutableStateFlow(BowelMovementLogUiState())
+    private val _uiState = MutableStateFlow(BowelMovementLogUiState(isEditing = editingId != -1L))
     val uiState: StateFlow<BowelMovementLogUiState> = _uiState.asStateFlow()
+
+    init {
+        if (editingId != -1L) {
+            viewModelScope.launch {
+                repository.getById(editingId)?.let { movement ->
+                    _uiState.update {
+                        it.copy(
+                            timestamp = movement.timestamp,
+                            consistency = movement.consistency,
+                            hasBlood = movement.hasBlood,
+                            hasMucus = movement.hasMucus,
+                            notes = movement.notes ?: ""
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun onTimestampChange(timestamp: Instant) {
         _uiState.update { it.copy(timestamp = timestamp) }
@@ -50,15 +74,23 @@ class BowelMovementLogViewModel(application: Application) : AndroidViewModel(app
     fun save() {
         val state = _uiState.value
         viewModelScope.launch {
-            repository.add(
-                BowelMovement(
-                    timestamp = state.timestamp,
-                    consistency = state.consistency,
-                    hasBlood = state.hasBlood,
-                    hasMucus = state.hasMucus,
-                    notes = state.notes.ifBlank { null }
-                )
+            val movement = BowelMovement(
+                id = if (editingId != -1L) editingId else 0,
+                timestamp = state.timestamp,
+                consistency = state.consistency,
+                hasBlood = state.hasBlood,
+                hasMucus = state.hasMucus,
+                notes = state.notes.ifBlank { null }
             )
+            if (editingId != -1L) repository.update(movement) else repository.add(movement)
+            _uiState.update { it.copy(saved = true) }
+        }
+    }
+
+    fun delete() {
+        if (editingId == -1L) return
+        viewModelScope.launch {
+            repository.getById(editingId)?.let { repository.delete(it) }
             _uiState.update { it.copy(saved = true) }
         }
     }

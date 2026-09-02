@@ -47,7 +47,16 @@ fun FoodLogScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Log Food") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text(if (uiState.isEditing) "Edit Food" else "Log Food") },
+                actions = {
+                    if (uiState.isEditing) {
+                        TextButton(onClick = viewModel::delete) { Text("Delete") }
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
