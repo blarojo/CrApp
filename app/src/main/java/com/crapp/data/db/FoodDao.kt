@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.crapp.data.model.Food
 import kotlinx.coroutines.flow.Flow
 
@@ -12,6 +13,16 @@ interface FoodDao {
     /** Returns the new row id, or -1 if a food with this [Food.name] already exists. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(food: Food): Long
+
+    @Update
+    suspend fun update(food: Food)
+
+    /** Bulk insert for backup restore (docs/development-plan.md Phase 8); preserves ids. */
+    @Insert
+    suspend fun insertAll(foods: List<Food>)
+
+    @Query("DELETE FROM food")
+    suspend fun deleteAll()
 
     @Query("SELECT * FROM food WHERE name = :name LIMIT 1")
     suspend fun getByName(name: String): Food?

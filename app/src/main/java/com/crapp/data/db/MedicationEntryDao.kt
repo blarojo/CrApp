@@ -13,6 +13,13 @@ interface MedicationEntryDao {
     @Insert
     suspend fun insert(medicationEntry: MedicationEntry): Long
 
+    /** Bulk insert for backup restore (docs/development-plan.md Phase 8); preserves ids. */
+    @Insert
+    suspend fun insertAll(medicationEntries: List<MedicationEntry>)
+
+    @Query("DELETE FROM medication_entry")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(medicationEntry: MedicationEntry)
 

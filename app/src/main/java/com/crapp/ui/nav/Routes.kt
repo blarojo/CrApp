@@ -5,6 +5,9 @@ object Routes {
     const val HOME = "home"
     const val HISTORY = "history"
     const val EXPORT = "export"
+    const val SETTINGS = "settings"
+    const val FOOD_CATALOG = "food_catalog"
+    const val INSIGHTS = "insights"
 
     const val LOG_BOWEL_MOVEMENT_PATTERN = "log_bowel_movement?id={id}"
     const val LOG_FOOD_PATTERN = "log_food?id={id}"

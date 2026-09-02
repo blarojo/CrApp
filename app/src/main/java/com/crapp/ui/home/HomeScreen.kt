@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.crapp.AppConfig
 import com.crapp.ui.common.AddEntryFab
 import com.crapp.ui.common.AddEntryOption
 import com.crapp.ui.common.ConsistencyTrendChart
@@ -36,6 +41,7 @@ fun HomeScreen(
     onLogMedication: () -> Unit,
     onViewHistory: () -> Unit,
     onExport: () -> Unit,
+    onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -45,19 +51,22 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("CrApp") },
+                title = { Text("💩 CrApp") },
                 actions = {
                     TextButton(onClick = onViewHistory) { Text("History") }
                     TextButton(onClick = onExport) { Text("Export") }
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
                 }
             )
         },
         floatingActionButton = {
             AddEntryFab(
                 options = listOf(
-                    AddEntryOption("Bowel Movement", onLogBowelMovement),
-                    AddEntryOption("Food", onLogFood),
-                    AddEntryOption("Medication", onLogMedication)
+                    AddEntryOption("💩 Bowel Movement", onLogBowelMovement),
+                    AddEntryOption("🍗 Food", onLogFood),
+                    AddEntryOption("💊 Medication", onLogMedication)
                 )
             )
         }
@@ -71,7 +80,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Bowel movement, food & medication tracker",
+                "Tracking ${AppConfig.DOG_NAME}'s bowel movements, food & medication 🐾",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

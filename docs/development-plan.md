@@ -243,6 +243,61 @@ the dashboard body focused on the summary/charts. Verified end-to-end on-device:
 expand/collapse, each of the 3 add options navigates to the right log screen, and the
 dashboard reflects real logged data correctly in both light and dark mode.
 
+**Phase 8 — Fun pass, theme toggle, ingredients, backup/restore, insights** 🔄 In
+progress
+
+A larger, mixed-scope round:
+- **Fun-but-snappy visual pass**: 🐾 poop-emoji app icon (hand-drawn vector, matching
+  the plain emoji face used in-app rather than a more elaborate original design --
+  swapped after feedback that a first, more elaborate attempt didn't land, and that a
+  Bristol-chart-style stock icon someone linked couldn't be copied in directly since
+  it's a paid commercial asset), 💩 in the Home title, Mango's name in the Home
+  subtitle and the Backup section, and emoji on History's type badges and the FAB's
+  menu labels.
+- **Light/dark toggle**: `ThemePreferences` (SharedPreferences, no DataStore
+  dependency needed for one enum) backs a System/Light/Dark radio group in the new
+  Settings screen (gear icon on Home); `MainActivity` resolves it to `CrAppTheme`'s
+  `darkTheme` param. Verified working from real taps on-device (not just adb).
+- **Bristol-chart-style visual consistency selector**: `StoolShapeIcon` (hand-drawn
+  Canvas shapes, 7 levels from separate lumps to a puddle) added to
+  `ConsistencySelector`, one per option alongside the number and description --
+  picture-plus-text selection like the Bristol chart, while deliberately keeping the
+  dog-appropriate Purina scale underneath rather than switching to the human-specific
+  Bristol wording (see §2's original reasoning for Purina over Bristol).
+- **Food ingredients**: `Food.ingredients` (nullable text), added via a real Room
+  `Migration(1, 2)` (`ALTER TABLE food ADD COLUMN ingredients TEXT`) -- not a
+  destructive fallback, per the AppDatabase persistence guarantee. New Food Catalog
+  screen (Settings -> Manage Foods & Ingredients) to view/edit ingredients per food,
+  manually or pasted from a label (photo/OCR capture is not implemented -- see
+  future-features.md). CSV export's `food_entries.csv` now includes an `ingredients`
+  column. A brand-new install is pre-seeded (via a `RoomDatabase.Callback.onCreate`,
+  which only fires once, so it never touches an existing install) with the 4 real
+  products requested, ingredients sourced from each manufacturer's own listing.
+- **Backup & Restore + Clear All Data**: `BackupRepository` serializes/restores the
+  whole database as JSON (distinct from the vet-facing CSV export -- preserves ids
+  and foreign keys exactly). Settings screen: "Back Up Data" (`CreateDocument` picker
+  -- saves anywhere the user picks, e.g. Drive/Downloads), "Restore from Backup"
+  (confirm dialog -> `OpenDocument` picker -> atomic replace-all restore in a Room
+  transaction), and a "Danger Zone" "Clear All Data" (confirm dialog -> wipes every
+  table including the food catalog). Outcomes show via both an in-app message and a
+  `Toast` -- added the Toast after finding the in-app message didn't reliably survive
+  the round-trip through the external system file-picker Activity on the test device.
+- **Insights**: promotes future-features.md's "CSV export -> Claude analysis skill ->
+  in-app dashboard upload" idea. New `.claude/skills/crapp-insights/SKILL.md` reads
+  the app's CSV export and writes a JSON insights report (trends + flagged
+  correlations); new Insights screen (Settings -> Insights) uploads and renders that
+  report as insight cards plus generic line/bar charts, persisted locally via
+  `InsightsPreferences` so it's still there next time the app opens.
+
+**What's verified vs. not yet**: the fun pass, theme toggle, and dashboard/FAB work
+(Phase 7) were confirmed on a real device with real taps. Backup was confirmed
+on-device -- file genuinely written with correct content (checked via `run-as`) --
+across two separate attempts, but the phone was disconnected mid-session before
+Restore, Clear All Data, the Food Catalog screen, and the Insights screen could be
+exercised on-device; they're implemented and unit-tested/compiled but not yet
+click-tested for real. Pick this back up next: verify those four flows on-device,
+particularly Restore and Clear All Data given they're destructive.
+
 Phases are sequential but each is small; expect Phases 0–4 to be a working, useful app.
 Phase 5 onward is refinement.
 

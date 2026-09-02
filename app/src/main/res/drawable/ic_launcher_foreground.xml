@@ -1,30 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Launcher icon foreground: a paw print (dog-tracking app), white on the green
-   ic_launcher_background. Shapes stay within the adaptive-icon safe zone
-   (roughly the central 72dp of this 108dp canvas) so they aren't clipped by the
-   system's mask shape.
+   Launcher icon foreground: matches the plain poop-emoji face used in-app (the
+   literal Unicode character, e.g. the Home screen title), a classic symmetric
+   happy swirl rather than a more elaborate original design. Hand-drawn (not a copy
+   of any stock asset), since Android vector drawables can't render emoji glyphs
+   directly. Over the existing green ic_launcher_background. Shapes stay close to
+   the adaptive-icon safe zone (roughly the central 72dp of this 108dp canvas) so
+   they aren't clipped by the system's mask shape.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Main pad -->
+    <!-- Swirl body, bottom to top -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,66 m-18,0 a18,14 0 1,0 36,0 a18,14 0 1,0 -36,0" />
-    <!-- Toes -->
+        android:fillColor="#8C6D3F"
+        android:pathData="M54,74 m-28,0 a28,17 0 1,0 56,0 a28,17 0 1,0 -56,0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M33,44 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+        android:fillColor="#8C6D3F"
+        android:pathData="M54,53 m-22,0 a22,16 0 1,0 44,0 a22,16 0 1,0 -44,0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M47,31 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+        android:fillColor="#8C6D3F"
+        android:pathData="M54,35 m-15,0 a15,13 0 1,0 30,0 a15,13 0 1,0 -30,0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M61,31 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+        android:fillColor="#8C6D3F"
+        android:pathData="M54,22 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+    <!-- Subtle gloss -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M75,44 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+        android:fillColor="#33FFFFFF"
+        android:pathData="M43,31 m-6,0 a6,8 0 1,0 12,0 a6,8 0 1,0 -12,0" />
+    <!-- Eyes: symmetric ovals, matching the plain emoji face -->
+    <path
+        android:fillColor="#3B2A18"
+        android:pathData="M45,49 m-4.5,0 a4.5,5.5 0 1,0 9,0 a4.5,5.5 0 1,0 -9,0" />
+    <path
+        android:fillColor="#3B2A18"
+        android:pathData="M63,49 m-4.5,0 a4.5,5.5 0 1,0 9,0 a4.5,5.5 0 1,0 -9,0" />
+    <!-- Simple closed smile -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#3B2A18"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:pathData="M44,59 Q54,66 64,59" />
 </vector>

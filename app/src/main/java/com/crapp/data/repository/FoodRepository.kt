@@ -13,6 +13,9 @@ class FoodRepository(
     /** Backs the food-picker dropdown: most-recently-used foods first. */
     val foodsByRecentUse: Flow<List<Food>> = foodDao.observeAllSortedByRecentUse()
 
+    /** Backs the Food Catalog screen (docs/development-plan.md Phase 8): alphabetical. */
+    val allFoods: Flow<List<Food>> = foodDao.observeAll()
+
     val allFoodEntries: Flow<List<FoodEntry>> = foodEntryDao.observeAll()
 
     /**
@@ -34,6 +37,9 @@ class FoodRepository(
     suspend fun getFoodEntryById(id: Long): FoodEntry? = foodEntryDao.getById(id)
 
     suspend fun getFoodById(id: Long): Food? = foodDao.getById(id)
+
+    /** Updates a food's ingredients (or name/brand), e.g. from the Food Catalog screen. */
+    suspend fun updateFood(food: Food) = foodDao.update(food)
 
     suspend fun logFoodEntry(entry: FoodEntry): Long = foodEntryDao.insert(entry)
 

@@ -57,6 +57,47 @@ automatically. Subsequent runs are much faster — only changed code gets rebuil
   works for most Compose UI/logic tweaks, but a full Run is more reliable for
   structural changes (new files, dependency changes, database schema changes).
 
+## 5. Using it day to day (you don't need to stay connected)
+
+The app that lands on your phone in step 3 is already a real, standalone app — not a
+preview or a "debug mode" that only works while tethered. Once **Run ▶** finishes:
+
+- It's installed under its own **CrApp** app icon in your app drawer/home screen, like
+  any other app.
+- **Unplug the cable (or leave wireless debugging) and use it normally** — logging
+  entries, viewing History, exporting — none of that needs Android Studio, a
+  connection, or your computer at all. Android Studio is only involved when you want
+  to install a *new* build.
+- Your logged data stays on the phone between app opens, restarts, and even the next
+  time you reinstall a new build over it via Run ▶ — reinstalling doesn't clear it.
+
+This "debug" build is genuinely fine to keep using for as long as you like — it's the
+same app, just built with debug settings (which mainly affects build speed and signing
+key, not functionality). Come back to Android Studio and hit **Run ▶** again only when
+you have a new version of the code to install.
+
+### Optional: a signed "release" build instead
+
+If you'd rather have a smaller, slightly faster build with no debug overhead (not
+required — purely optional polish):
+
+1. **Build → Generate Signed App Bundle / APK…** in Android Studio, choose **APK**.
+2. First time: click **Create new...** to generate a signing keystore (a file that
+   proves future updates are really you — save it somewhere safe outside this repo;
+   losing it means a future release build can't update this one without uninstalling
+   first). Fill in the password fields and a validity of e.g. 25+ years.
+3. Choose the **release** build variant, finish the wizard.
+4. Android Studio shows a **"locate"** link when it's done — the APK is under
+   `app/release/`. Either tap **locate**, copy it to your phone, and open it there
+   (allow "install unknown apps" for whichever app you use to open it), or install it
+   over USB the same way as §9.3 in development-plan.md
+   (`adb install -r app/release/app-release.apk`).
+5. Installing this over the debug build first requires uninstalling the debug one —
+   they use different signing keys, so `INSTALL_FAILED_UPDATE_INCOMPATIBLE` is
+   expected if you skip that.
+
+See development-plan.md §9.4 for more detail on this path.
+
 ## Troubleshooting
 
 | Problem | Try this |

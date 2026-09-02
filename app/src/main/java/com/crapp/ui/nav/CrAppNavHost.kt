@@ -10,9 +10,12 @@ import androidx.navigation.navArgument
 import com.crapp.ui.bowel.BowelMovementLogScreen
 import com.crapp.ui.export.ExportScreen
 import com.crapp.ui.food.FoodLogScreen
+import com.crapp.ui.foodcatalog.FoodCatalogScreen
 import com.crapp.ui.history.HistoryScreen
 import com.crapp.ui.home.HomeScreen
+import com.crapp.ui.insights.InsightsScreen
 import com.crapp.ui.medication.MedicationLogScreen
+import com.crapp.ui.settings.SettingsScreen
 
 @Composable
 fun CrAppNavHost(modifier: Modifier = Modifier) {
@@ -29,8 +32,22 @@ fun CrAppNavHost(modifier: Modifier = Modifier) {
                 onLogFood = { navController.navigate(Routes.logFood()) },
                 onLogMedication = { navController.navigate(Routes.logMedication()) },
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
-                onExport = { navController.navigate(Routes.EXPORT) }
+                onExport = { navController.navigate(Routes.EXPORT) },
+                onSettings = { navController.navigate(Routes.SETTINGS) }
             )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onManageFoodCatalog = { navController.navigate(Routes.FOOD_CATALOG) },
+                onViewInsights = { navController.navigate(Routes.INSIGHTS) }
+            )
+        }
+        composable(Routes.FOOD_CATALOG) {
+            FoodCatalogScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.INSIGHTS) {
+            InsightsScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.HISTORY) {
             HistoryScreen(

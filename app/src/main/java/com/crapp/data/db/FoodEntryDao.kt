@@ -13,6 +13,13 @@ interface FoodEntryDao {
     @Insert
     suspend fun insert(foodEntry: FoodEntry): Long
 
+    /** Bulk insert for backup restore (docs/development-plan.md Phase 8); preserves ids. */
+    @Insert
+    suspend fun insertAll(foodEntries: List<FoodEntry>)
+
+    @Query("DELETE FROM food_entry")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(foodEntry: FoodEntry)
 

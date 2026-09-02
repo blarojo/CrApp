@@ -16,5 +16,11 @@ import androidx.room.PrimaryKey
 data class Food(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val brand: String? = null
+    val brand: String? = null,
+    /**
+     * Free-text ingredient list (see docs/development-plan.md Phase 8), entered
+     * manually or copied from a label -- lets a food's ingredients be cross-checked
+     * against logged bowel movements for potential triggers.
+     */
+    val ingredients: String? = null
 )

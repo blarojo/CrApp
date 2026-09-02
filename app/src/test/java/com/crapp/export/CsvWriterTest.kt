@@ -46,8 +46,8 @@ class CsvWriterTest {
     }
 
     @Test
-    fun foodEntriesCsv_resolvesFoodNameAndBrand() {
-        val food = Food(id = 10, name = "Hill's I/D", brand = "Hill's")
+    fun foodEntriesCsv_resolvesFoodNameBrandAndIngredients() {
+        val food = Food(id = 10, name = "Hill's I/D", brand = "Hill's", ingredients = "Chicken, rice, oat fiber")
         val entries = listOf(
             FoodEntry(id = 1, timestamp = Instant.parse("2026-09-01T12:00:00Z"), foodId = 10, amount = "1/2 cup", mealType = MealType.MEAL)
         )
@@ -55,12 +55,15 @@ class CsvWriterTest {
         val csv = CsvWriter.foodEntriesCsv(entries, mapOf(10L to food), zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("id,timestamp,food,brand,amount,meal_type", lines[0])
-        assertEquals("1,2026-09-01 12:00:00,Hill's I/D,Hill's,1/2 cup,MEAL", lines[1])
+        assertEquals("id,timestamp,food,brand,amount,meal_type,ingredients", lines[0])
+        assertEquals(
+            "1,2026-09-01 12:00:00,Hill's I/D,Hill's,1/2 cup,MEAL,\"Chicken, rice, oat fiber\"",
+            lines[1]
+        )
     }
 
     @Test
-    fun foodEntriesCsv_missingFood_leavesNameAndBrandBlank() {
+    fun foodEntriesCsv_missingFood_leavesNameBrandAndIngredientsBlank() {
         val entries = listOf(
             FoodEntry(id = 1, timestamp = Instant.parse("2026-09-01T12:00:00Z"), foodId = 999, mealType = MealType.TREAT)
         )
@@ -68,7 +71,7 @@ class CsvWriterTest {
         val csv = CsvWriter.foodEntriesCsv(entries, emptyMap(), zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("1,2026-09-01 12:00:00,,,,TREAT", lines[1])
+        assertEquals("1,2026-09-01 12:00:00,,,,TREAT,", lines[1])
     }
 
     @Test

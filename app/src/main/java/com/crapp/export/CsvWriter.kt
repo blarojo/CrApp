@@ -42,15 +42,17 @@ object CsvWriter {
     }
 
     /**
-     * [foodsById] resolves each entry's [FoodEntry.foodId] to its catalog name/brand
-     * so the export is human-readable without needing to cross-reference a second file.
+     * [foodsById] resolves each entry's [FoodEntry.foodId] to its catalog
+     * name/brand/ingredients so the export is human-readable without needing to
+     * cross-reference a second file, and so ingredient-level correlation is
+     * possible from the CSV alone (see the `crapp-insights` Claude skill).
      */
     fun foodEntriesCsv(
         entries: List<FoodEntry>,
         foodsById: Map<Long, Food>,
         zone: ZoneId = ZoneId.systemDefault()
     ): String {
-        val header = listOf("id", "timestamp", "food", "brand", "amount", "meal_type")
+        val header = listOf("id", "timestamp", "food", "brand", "amount", "meal_type", "ingredients")
         val rows = entries.map { e ->
             val food = foodsById[e.foodId]
             listOf(
@@ -59,7 +61,8 @@ object CsvWriter {
                 food?.name.orEmpty(),
                 food?.brand.orEmpty(),
                 e.amount.orEmpty(),
-                e.mealType.name
+                e.mealType.name,
+                food?.ingredients.orEmpty()
             )
         }
         return toCsv(header, rows)

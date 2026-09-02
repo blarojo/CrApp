@@ -198,7 +198,7 @@ private fun HistoryRow(
                 if (m.hasMucus) add("mucus")
             }
             HistoryRowContent(
-                badgeText = "BOWEL",
+                badgeText = "💩 BOWEL",
                 badgeColor = Color(0xFF6D4C41),
                 title = "Consistency ${m.consistency}" + if (flags.isNotEmpty()) " (${flags.joinToString()})" else "",
                 subtitle = m.notes ?: ""
@@ -207,7 +207,7 @@ private fun HistoryRow(
         is HistoryEntry.FoodLogEntry -> {
             val e = entry.entry
             HistoryRowContent(
-                badgeText = "FOOD",
+                badgeText = "🍗 FOOD",
                 badgeColor = Color(0xFF2E7D32),
                 title = entry.food?.name ?: "Unknown food",
                 subtitle = e.mealType.name.lowercase().replaceFirstChar { it.uppercase() } +
@@ -217,7 +217,7 @@ private fun HistoryRow(
         is HistoryEntry.MedicationLogEntry -> {
             val e = entry.entry
             HistoryRowContent(
-                badgeText = "MED",
+                badgeText = "💊 MED",
                 badgeColor = Color(0xFF1565C0),
                 title = e.name,
                 subtitle = e.dose ?: ""

@@ -13,6 +13,13 @@ interface BowelMovementDao {
     @Insert
     suspend fun insert(bowelMovement: BowelMovement): Long
 
+    /** Bulk insert for backup restore (docs/development-plan.md Phase 8); preserves ids. */
+    @Insert
+    suspend fun insertAll(bowelMovements: List<BowelMovement>)
+
+    @Query("DELETE FROM bowel_movement")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(bowelMovement: BowelMovement)
 
