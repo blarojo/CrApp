@@ -19,7 +19,7 @@ Core needs:
 | Feature | Description |
 |---|---|
 | Log bowel movement | Timestamp (defaults to now, editable), consistency score, color, presence of blood/mucus (yes/no), free-text notes |
-| Log food | Timestamp, food name/brand, amount, meal or treat |
+| Log food | Timestamp, food picked from a dropdown of previously-used foods (or "Add new"), amount, meal or treat |
 | Log medication | Timestamp, medication name, dose + unit, notes |
 | History view | Chronological list of all entries, filterable by type and date range |
 | Edit / delete entry | All logged entries must be correctable — mistakes happen mid-crisis |
@@ -39,8 +39,10 @@ matters when you're doing this multiple times a day under stress.
 
 ## 3. Data Model
 
-Single dog, so no `Dog` entity in the MVP — just three log tables. Each row is
-independently timestamped and editable.
+Single dog, so no `Dog` entity in the MVP. Bowel movements and medications are plain
+log tables; food gets a small catalog table (`food`) so entries can be picked from a
+dropdown instead of retyped every time. Each row is independently timestamped and
+editable.
 
 **`bowel_movement`**
 | Field | Type | Notes |
@@ -53,14 +55,30 @@ independently timestamped and editable.
 | hasMucus | Boolean | quick flag |
 | notes | String? | free text |
 
+**`food`** — catalog of known foods, built up as you go
+| Field | Type | Notes |
+|---|---|---|
+| id | Long (PK, autogenerate) | |
+| name | String | e.g. "Hill's I/D", "boiled chicken"; unique |
+| brand | String? | optional |
+
 **`food_entry`**
 | Field | Type | Notes |
 |---|---|---|
 | id | Long (PK, autogenerate) | |
 | timestamp | Instant | |
-| name | String | e.g. "Hill's I/D", "boiled chicken" |
+| foodId | Long (FK → food.id) | selected via dropdown |
 | amount | String? | free text, e.g. "1/2 cup" — avoid forcing units |
 | mealType | Enum | MEAL / TREAT |
+
+Food dropdown UX: the food-logging screen shows a searchable dropdown of existing
+`food` rows (sorted by most-recently-used, so the common cases are one tap), plus an
+"Add new" option at the bottom. Picking "Add new" opens a small inline field for name
+(+ optional brand) — on save, it inserts into `food` and immediately selects it for
+the entry being logged, so adding a never-before-seen food doesn't interrupt the log
+flow. This also gives the future ingredient-insights feature (see
+[future-features.md](future-features.md)) a natural place to hang ingredient data
+later, without needing a schema change.
 
 **`medication_entry`**
 | Field | Type | Notes |
@@ -148,14 +166,15 @@ prefer testing on the physical device from day one (see §9).
 Empty Compose project builds and runs on-device. Git repo initialized.
 
 **Phase 1 — Data layer**
-Room entities (`BowelMovement`, `FoodEntry`, `MedicationEntry`), DAOs with
+Room entities (`BowelMovement`, `Food`, `FoodEntry`, `MedicationEntry`), DAOs with
 insert/update/delete/query-all-as-Flow, `AppDatabase` singleton, repository layer.
 Unit-test DAOs with an in-memory Room database.
 
 **Phase 2 — Logging screens**
 Three entry forms (bowel movement, food, medication), each backed by a `ViewModel`.
 Fast-entry UX matters most here: sensible defaults (timestamp = now), minimal required
-fields, big touch targets, one thumb usable.
+fields, big touch targets, one thumb usable. Food entry uses the dropdown + "Add new"
+flow described in §3, backed by the `food` catalog table.
 
 **Phase 3 — History view**
 Combined, reverse-chronological list of all entry types with icons/color-coding by
