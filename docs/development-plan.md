@@ -220,6 +220,22 @@ already installed and in use before this pass, with real entries logged. What's 
 is open-ended: keep using it for a few days and fix whatever friction turns up — more
 valuable than synthetic testing given the app's purpose.
 
+**Phase 7 — Dashboard & quick-add FAB** ⬜ Not started
+
+Turn Home into a lightweight dashboard: keep the today's-summary card from Phase 5 and
+add simple in-app trend charts — hand-rolled with Compose `Canvas` (no charting
+library, matching the project's no-unnecessary-dependencies stance) rather than the
+heavier CSV-export → Claude-analysis pipeline idea in future-features.md. This
+promotes the "simple in-app trend charts" backlog item to active development:
+- Consistency-over-time chart (recent bowel movements' Purina score, connected line +
+  points).
+- Movements-per-day frequency chart (bar chart, last ~7 days).
+
+Replace the three "Log X" buttons with a single expandable "+" floating action button
+(bottom-right) that opens a small menu to pick which of the three entry types to add —
+fewer taps, less cluttered screen, one consistent entry point for adding data
+("snappy" interface pass).
+
 Phases are sequential but each is small; expect Phases 0–4 to be a working, useful app.
 Phase 5 onward is refinement.
 
