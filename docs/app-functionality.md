@@ -20,8 +20,7 @@ Screen: **Log/Edit Bowel Movement** (`BowelMovementLogScreen`).
 | Timestamp | ✅ | Defaults to now; editable date + time pickers. |
 | Consistency (1–7) | ✅ | Purina Fecal Scoring Chart, tap-to-select with an icon + description per score. |
 | Amount | 🧪 | Three-option tap selector: **Some drips** / **Medium amount** / **A lot of poo**. Independent of consistency — a small amount can still be liquid. Optional. |
-| Location | 🧪 | **Home** / **Walk** / **Other** tap selector; picking **Other** reveals a free-text field for where. Optional. |
-| Night-time flag | 🧪 | Computed automatically from the timestamp against a configurable night window (default 10pm–6am, see [Settings](#7-settings) → not yet exposed there — currently code-default only, see [Testing status](#testing-status)). Not a user-facing toggle. |
+| When / Where | 🧪 | Three tap chips: **Night** / **Walk** / **Home**. **Night** is an independent toggle (can be combined with Walk or Home) pre-filled from a configurable night window (default 10pm–6am) but always user-overridable; **Walk** / **Home** set the location and are mutually exclusive. (The `Location.OTHER` value and its free-text field still exist in the data model for backward compatibility but are no longer exposed in this UI.) |
 | Blood / mucus present | ✅ | Two checkboxes. |
 | Notes | ✅ | Free text. |
 | Photo | 🧪 | "Take Photo" opens the device camera, saving into a shared, user-visible **`Pictures/CrApp`** album via `MediaStore` — deliberately *not* app-private storage, so photos survive an uninstall/reinstall. Thumbnail shown inline (decoded on-device, no image-loading library); tap "Remove" to delete. |
@@ -39,7 +38,7 @@ via Settings).
   new one inline without leaving the log flow. ✅
 - Meal type: Meal / Treat chip select. ✅
 - Amount: free text (e.g. "1/2 cup"). ✅
-- **Structured amount** 🧪 — additive numeric value + unit (cup / tbsp / g) fields
+- **Structured amount** 🧪 — additive numeric value + unit (cup / tbsp / g / tin (400g)) fields
   alongside the free-text amount, for future analysis that needs real numbers
   instead of parsing prose.
 - Food Catalog lets you add/edit a food's ingredients as free text (manual entry or
@@ -114,7 +113,9 @@ Screen: **Home** (`HomeScreen`).
 - **Adjustable time window** 🧪 — a 7d / 14d / 30d / 90d chip row above the charts
   now drives both charts together (was a fixed last-14-points / last-7-days).
 - **Night movements** / **Walk movements** stat tiles for the selected window 🧪 —
-  counts of bowel movements tagged night-time or Location = Walk.
+  Night counts bowel movements tagged night-time; Walk sums individually-tagged
+  Location = Walk movements *plus* dog-walker-reported Walk-entry counts (the two
+  are never double-counted at entry time, so summing them is safe).
 - `+` quick-add FAB: Bowel Movement, Food, Medication, **Energy** 🧪, **Walk** 🧪.
 
 ## 8. CSV Export

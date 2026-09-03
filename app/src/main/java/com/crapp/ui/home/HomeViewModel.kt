@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
 import com.crapp.data.model.Location
+import com.crapp.data.model.WalkEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,12 @@ data class HomeUiState(
     val window: TrendWindow = TrendWindow.FOURTEEN_DAYS,
     val consistencyTrend: List<ConsistencyPoint> = emptyList(),
     val dailyFrequency: List<DailyCount> = emptyList(),
-    /** Movements tagged Location.WALK or isNightTime within the selected window -- spec 3. */
+    /**
+     * Movements tagged Location.WALK, plus dog-walker-reported [WalkEntry.bowelMovementCount]
+     * totals, within the selected window -- spec 3/5. These two sources are deliberately never
+     * double-counted at entry time (see the warning on WalkLogScreen), so it's safe to sum them
+     * here into one dashboard total.
+     */
     val walkMovementsInWindow: Int = 0,
     val nightMovementsInWindow: Int = 0
 )
@@ -64,8 +70,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         app.bowelMovementRepository.allMovements,
         app.foodRepository.allFoodEntries,
         app.medicationRepository.allEntries,
+        app.walkRepository.allEntries,
         _window
-    ) { movements, foodEntries, medications, window ->
+    ) { movements, foodEntries, medications, walkEntries, window ->
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         fun Instant.toLocalDate() = atZone(zone).toLocalDate()
@@ -94,6 +101,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             DailyCount(date, countsByDay[date] ?: 0)
         }
 
+        val walkEntryCountInWindow = walkEntries
+            .filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
+            .sumOf(WalkEntry::bowelMovementCount)
+
         HomeUiState(
             bowelMovementsToday = movements.count { it.timestamp.isToday() },
             foodEntriesToday = foodEntries.count { it.timestamp.isToday() },
@@ -103,7 +114,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             window = window,
             consistencyTrend = trend,
             dailyFrequency = frequency,
-            walkMovementsInWindow = movementsInWindow.count { it.location == Location.WALK },
+            walkMovementsInWindow = movementsInWindow.count { it.location == Location.WALK } + walkEntryCountInWindow,
             nightMovementsInWindow = movementsInWindow.count { it.isNightTime }
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())

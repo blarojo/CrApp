@@ -105,22 +105,25 @@ fun BowelMovementLogScreen(
                 }
             }
 
-            Text(text = "Location", style = MaterialTheme.typography.titleMedium)
+            Text(text = "When / Where", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Location.entries.forEach { location ->
-                    FilterChip(
-                        selected = uiState.location == location,
-                        onClick = { viewModel.onLocationChange(location) },
-                        label = { Text(location.name.lowercase().replaceFirstChar { it.uppercase() }) }
-                    )
-                }
-            }
-            if (uiState.location == Location.OTHER) {
-                OutlinedTextField(
-                    value = uiState.locationOther,
-                    onValueChange = viewModel::onLocationOtherChange,
-                    label = { Text("Where? (optional)") },
-                    modifier = Modifier.fillMaxWidth()
+                // "Night" is an independent toggle (can combine with Walk or Home below),
+                // pre-filled from the configured night window but user-overridable -- see
+                // BowelMovementLogViewModel.onNightTimeChange.
+                FilterChip(
+                    selected = uiState.isNightTime,
+                    onClick = { viewModel.onNightTimeChange(!uiState.isNightTime) },
+                    label = { Text("Night") }
+                )
+                FilterChip(
+                    selected = uiState.location == Location.WALK,
+                    onClick = { viewModel.onLocationChange(Location.WALK) },
+                    label = { Text("Walk") }
+                )
+                FilterChip(
+                    selected = uiState.location == Location.HOME,
+                    onClick = { viewModel.onLocationChange(Location.HOME) },
+                    label = { Text("Home") }
                 )
             }
 

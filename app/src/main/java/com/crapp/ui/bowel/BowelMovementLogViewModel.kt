@@ -26,6 +26,12 @@ data class BowelMovementLogUiState(
     val amount: Amount? = null,
     val location: Location? = null,
     val locationOther: String = "",
+    /**
+     * Manually toggled by the "Night" quick-select chip -- pre-filled from the configured
+     * night window at screen-open time (or from the saved value when editing), but the user
+     * has the final say rather than it being silently inferred at save time.
+     */
+    val isNightTime: Boolean = false,
     val photoUri: String? = null,
     val isEditing: Boolean = false,
     val saved: Boolean = false
@@ -43,7 +49,12 @@ class BowelMovementLogViewModel(
 
     private var previousPhotoUri: String? = null
 
-    private val _uiState = MutableStateFlow(BowelMovementLogUiState(isEditing = editingId != -1L))
+    private val _uiState = MutableStateFlow(
+        BowelMovementLogUiState(
+            isEditing = editingId != -1L,
+            isNightTime = nightWindowPreferences.nightWindow.value.isNightTime(Instant.now())
+        )
+    )
     val uiState: StateFlow<BowelMovementLogUiState> = _uiState.asStateFlow()
 
     init {
@@ -61,6 +72,7 @@ class BowelMovementLogViewModel(
                             amount = movement.amount,
                             location = movement.location,
                             locationOther = movement.locationOther ?: "",
+                            isNightTime = movement.isNightTime,
                             photoUri = movement.photoUri
                         )
                     }
@@ -104,6 +116,10 @@ class BowelMovementLogViewModel(
         _uiState.update { it.copy(locationOther = text) }
     }
 
+    fun onNightTimeChange(isNightTime: Boolean) {
+        _uiState.update { it.copy(isNightTime = isNightTime) }
+    }
+
     /** Creates a fresh `MediaStore` target for the camera to write into; returns null if the store rejected it. */
     fun createPhotoCaptureTarget(): Uri? = photoStore.createNewPhotoUri()
 
@@ -120,7 +136,6 @@ class BowelMovementLogViewModel(
     fun save() {
         val state = _uiState.value
         viewModelScope.launch {
-            val nightWindow = nightWindowPreferences.nightWindow.value
             val movement = BowelMovement(
                 id = if (editingId != -1L) editingId else 0,
                 timestamp = state.timestamp,
@@ -131,7 +146,7 @@ class BowelMovementLogViewModel(
                 amount = state.amount,
                 location = state.location,
                 locationOther = state.locationOther.ifBlank { null }.takeIf { state.location == Location.OTHER },
-                isNightTime = nightWindow.isNightTime(state.timestamp),
+                isNightTime = state.isNightTime,
                 photoUri = state.photoUri
             )
             if (editingId != -1L) repository.update(movement) else repository.add(movement)
