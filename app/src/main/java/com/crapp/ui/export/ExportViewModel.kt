@@ -31,6 +31,8 @@ class ExportViewModel(application: Application) : AndroidViewModel(application) 
     private val bowelRepo = app.bowelMovementRepository
     private val foodRepo = app.foodRepository
     private val medRepo = app.medicationRepository
+    private val energyRepo = app.energyRepository
+    private val walkRepo = app.walkRepository
     private val exporter = CsvExporter(application)
 
     private val _uiState = MutableStateFlow(ExportUiState())
@@ -45,8 +47,11 @@ class ExportViewModel(application: Application) : AndroidViewModel(application) 
         // Nothing to export yet -- disable the button rather than share three
         // empty (header-only) CSVs.
         viewModelScope.launch {
-            combine(bowelRepo.allMovements, foodRepo.allFoodEntries, medRepo.allEntries) { m, f, med ->
-                m.isNotEmpty() || f.isNotEmpty() || med.isNotEmpty()
+            combine(
+                bowelRepo.allMovements, foodRepo.allFoodEntries, medRepo.allEntries,
+                energyRepo.allEntries, walkRepo.allEntries
+            ) { m, f, med, energy, walks ->
+                m.isNotEmpty() || f.isNotEmpty() || med.isNotEmpty() || energy.isNotEmpty() || walks.isNotEmpty()
             }.collect { hasAnyData -> _uiState.update { it.copy(hasAnyData = hasAnyData) } }
         }
     }
@@ -67,8 +72,10 @@ class ExportViewModel(application: Application) : AndroidViewModel(application) 
             val foodEntries = foodRepo.allFoodEntries.first().filterInRange(range, zone) { it.timestamp }
             val foodsById = foodRepo.foodsByRecentUse.first().associateBy { it.id }
             val medications = medRepo.allEntries.first().filterInRange(range, zone) { it.timestamp }
+            val energyEntries = energyRepo.allEntries.first().filterInRange(range, zone) { it.timestamp }
+            val walkEntries = walkRepo.allEntries.first().filterInRange(range, zone) { it.timestamp }
 
-            val intent = exporter.export(movements, foodEntries, foodsById, medications, zone)
+            val intent = exporter.export(movements, foodEntries, foodsById, medications, energyEntries, walkEntries, zone)
             _uiState.update { it.copy(isExporting = false) }
             _shareIntent.send(intent)
         }

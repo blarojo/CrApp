@@ -31,18 +31,25 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private val bowelRepo = app.bowelMovementRepository
     private val foodRepo = app.foodRepository
     private val medRepo = app.medicationRepository
+    private val energyRepo = app.energyRepository
+    private val walkRepo = app.walkRepository
 
-    private val allEntries: StateFlow<List<HistoryEntry>> = combine(
-        bowelRepo.allMovements,
-        foodRepo.allFoodEntries,
-        foodRepo.foodsByRecentUse,
-        medRepo.allEntries
+    // kotlinx.coroutines' combine() tops out at 5 typed flows, so this nests two
+    // combine() calls rather than casting through a vararg Array<Any?> overload.
+    private val bowelFoodMedHistory: StateFlow<List<HistoryEntry>> = combine(
+        bowelRepo.allMovements, foodRepo.allFoodEntries, foodRepo.foodsByRecentUse, medRepo.allEntries
     ) { movements, foodEntries, foods, medications ->
         val foodsById = foods.associateBy { it.id }
-        val bowelHistory = movements.map { HistoryEntry.BowelMovementEntry(it) }
-        val foodHistory = foodEntries.map { HistoryEntry.FoodLogEntry(it, foodsById[it.foodId]) }
-        val medHistory = medications.map { HistoryEntry.MedicationLogEntry(it) }
-        (bowelHistory + foodHistory + medHistory).sortedByDescending { it.timestamp }
+        movements.map { HistoryEntry.BowelMovementEntry(it) } +
+            foodEntries.map { HistoryEntry.FoodLogEntry(it, foodsById[it.foodId]) } +
+            medications.map { HistoryEntry.MedicationLogEntry(it) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val allEntries: StateFlow<List<HistoryEntry>> = combine(
+        bowelFoodMedHistory, energyRepo.allEntries, walkRepo.allEntries
+    ) { partial, energyEntries, walkEntries ->
+        (partial + energyEntries.map { HistoryEntry.EnergyLogEntry(it) } + walkEntries.map { HistoryEntry.WalkLogEntry(it) })
+            .sortedByDescending { it.timestamp }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _filter = MutableStateFlow(HistoryFilter())
@@ -96,6 +103,8 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                 is HistoryEntry.BowelMovementEntry -> bowelRepo.delete(entry.movement)
                 is HistoryEntry.FoodLogEntry -> foodRepo.deleteFoodEntry(entry.entry)
                 is HistoryEntry.MedicationLogEntry -> medRepo.delete(entry.entry)
+                is HistoryEntry.EnergyLogEntry -> energyRepo.delete(entry.entry)
+                is HistoryEntry.WalkLogEntry -> walkRepo.delete(entry.entry)
             }
             _pendingDelete.value = null
         }

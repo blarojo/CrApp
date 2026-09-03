@@ -12,7 +12,7 @@ class MedicationRepositoryTest {
 
     @Test
     fun add_thenGetById_returnsIt() = runBlocking {
-        val repo = MedicationRepository(FakeMedicationEntryDao())
+        val repo = MedicationRepository(FakeMedicationEntryDao(), FakeMedicationDao())
 
         val id = repo.add(MedicationEntry(timestamp = Instant.now(), name = "Metronidazole", dose = "250mg"))
 
@@ -21,7 +21,7 @@ class MedicationRepositoryTest {
 
     @Test
     fun update_persistsChangedDose() = runBlocking {
-        val repo = MedicationRepository(FakeMedicationEntryDao())
+        val repo = MedicationRepository(FakeMedicationEntryDao(), FakeMedicationDao())
         val id = repo.add(MedicationEntry(timestamp = Instant.now(), name = "Metronidazole", dose = "250mg"))
 
         repo.update(repo.getById(id)!!.copy(dose = "500mg"))
@@ -31,7 +31,7 @@ class MedicationRepositoryTest {
 
     @Test
     fun delete_removesIt() = runBlocking {
-        val repo = MedicationRepository(FakeMedicationEntryDao())
+        val repo = MedicationRepository(FakeMedicationEntryDao(), FakeMedicationDao())
         val id = repo.add(MedicationEntry(timestamp = Instant.now(), name = "Metronidazole"))
 
         repo.delete(repo.getById(id)!!)
@@ -41,7 +41,7 @@ class MedicationRepositoryTest {
 
     @Test
     fun allEntries_reflectsInserts() = runBlocking {
-        val repo = MedicationRepository(FakeMedicationEntryDao())
+        val repo = MedicationRepository(FakeMedicationEntryDao(), FakeMedicationDao())
         repo.add(MedicationEntry(timestamp = Instant.parse("2026-09-01T09:00:00Z"), name = "Metronidazole"))
         repo.add(MedicationEntry(timestamp = Instant.parse("2026-09-02T09:00:00Z"), name = "Probiotic"))
 

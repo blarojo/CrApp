@@ -1,6 +1,7 @@
 package com.crapp.data.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -16,6 +17,19 @@ interface FoodDao {
 
     @Update
     suspend fun update(food: Food)
+
+    /**
+     * Backs the Food Catalog's "delete old ones" flow. `food_entry.foodId` is a
+     * `RESTRICT` foreign key (see [com.crapp.data.model.FoodEntry]'s KDoc), so this
+     * throws `android.database.sqlite.SQLiteConstraintException` if any food_entry
+     * still references [food] -- the caller (FoodRepository) surfaces that as a
+     * friendly "still in use" message rather than silently orphaning history.
+     */
+    @Delete
+    suspend fun delete(food: Food)
+
+    @Query("SELECT COUNT(*) FROM food_entry WHERE foodId = :foodId")
+    suspend fun countFoodEntriesReferencing(foodId: Long): Int
 
     /** Bulk insert for backup restore (docs/development-plan.md Phase 8); preserves ids. */
     @Insert

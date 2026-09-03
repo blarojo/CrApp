@@ -7,9 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.crapp.data.model.BowelMovement
+import com.crapp.data.model.EnergyEntry
 import com.crapp.data.model.Food
 import com.crapp.data.model.FoodEntry
+import com.crapp.data.model.FoodIngredient
+import com.crapp.data.model.Ingredient
+import com.crapp.data.model.Medication
 import com.crapp.data.model.MedicationEntry
+import com.crapp.data.model.WalkEntry
 
 /**
  * An app *update* (installing a new version over an existing install, e.g. `adb
@@ -22,8 +27,12 @@ import com.crapp.data.model.MedicationEntry
  * doesn't: uninstalling, losing the phone, or a factory reset.
  */
 @Database(
-    entities = [BowelMovement::class, Food::class, FoodEntry::class, MedicationEntry::class],
-    version = 2,
+    entities = [
+        BowelMovement::class, Food::class, FoodEntry::class, MedicationEntry::class,
+        EnergyEntry::class, WalkEntry::class, Ingredient::class, FoodIngredient::class,
+        Medication::class
+    ],
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -32,6 +41,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
     abstract fun foodEntryDao(): FoodEntryDao
     abstract fun medicationEntryDao(): MedicationEntryDao
+    abstract fun energyEntryDao(): EnergyEntryDao
+    abstract fun walkEntryDao(): WalkEntryDao
+    abstract fun ingredientDao(): IngredientDao
+    abstract fun medicationDao(): MedicationDao
 
     companion object {
         private const val DATABASE_NAME = "crapp.db"
@@ -65,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Room.inMemoryDatabaseBuilder(appContext, AppDatabase::class.java).build()
             } else {
                 Room.databaseBuilder(appContext, AppDatabase::class.java, DATABASE_NAME)
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(SeedDataCallback)
                     .build()
             }

@@ -3,6 +3,7 @@ package com.crapp.ui.home
 import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +41,8 @@ fun HomeScreen(
     onLogBowelMovement: () -> Unit,
     onLogFood: () -> Unit,
     onLogMedication: () -> Unit,
+    onLogEnergy: () -> Unit,
+    onLogWalk: () -> Unit,
     onViewHistory: () -> Unit,
     onExport: () -> Unit,
     onSettings: () -> Unit,
@@ -66,7 +70,9 @@ fun HomeScreen(
                 options = listOf(
                     AddEntryOption("💩 Bowel Movement", onLogBowelMovement),
                     AddEntryOption("🍗 Food", onLogFood),
-                    AddEntryOption("💊 Medication", onLogMedication)
+                    AddEntryOption("💊 Medication", onLogMedication),
+                    AddEntryOption("⚡ Energy", onLogEnergy),
+                    AddEntryOption("🚶 Walk", onLogWalk)
                 )
             )
         }
@@ -88,11 +94,25 @@ fun HomeScreen(
             TodaySummaryCard(uiState)
 
             if (uiState.hasAnyEntries) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TrendWindow.entries.forEach { window ->
+                        FilterChip(
+                            selected = uiState.window == window,
+                            onClick = { viewModel.onWindowChange(window) },
+                            label = { Text(window.label) }
+                        )
+                    }
+                }
+
                 DashboardCard(title = "Consistency trend") {
                     ConsistencyTrendChart(points = uiState.consistencyTrend, modifier = Modifier.fillMaxWidth())
                 }
                 DashboardCard(title = "Movements per day") {
                     FrequencyBarChart(days = uiState.dailyFrequency, modifier = Modifier.fillMaxWidth())
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatTile(label = "Night movements", value = uiState.nightMovementsInWindow, modifier = Modifier.weight(1f))
+                    StatTile(label = "Walk movements", value = uiState.walkMovementsInWindow, modifier = Modifier.weight(1f))
                 }
             }
 
@@ -108,6 +128,17 @@ private fun DashboardCard(title: String, content: @Composable () -> Unit) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             content()
+        }
+    }
+}
+
+/** A single stat number for the selected window -- spec 3's night/walk movement rollups. */
+@Composable
+private fun StatTile(label: String, value: Int, modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(value.toString(), style = MaterialTheme.typography.headlineMedium)
+            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

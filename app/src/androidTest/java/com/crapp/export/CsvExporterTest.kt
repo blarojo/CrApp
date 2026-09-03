@@ -17,7 +17,7 @@ class CsvExporterTest {
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
 
     @Test
-    fun export_writesThreeCsvFilesAndReturnsAShareIntentForAllOfThem() {
+    fun export_writesFiveCsvFilesAndReturnsAShareIntentForAllOfThem() {
         val exporter = CsvExporter(context)
         val movements = listOf(
             BowelMovement(id = 1, timestamp = Instant.parse("2026-09-01T08:00:00Z"), consistency = 6)
@@ -28,12 +28,14 @@ class CsvExporterTest {
         assertEquals(Intent.ACTION_SEND_MULTIPLE, intent.action)
         assertEquals("text/csv", intent.type)
         val uris = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
-        assertEquals(3, uris?.size)
+        assertEquals(5, uris?.size)
 
         val exportsDir = File(context.cacheDir, "exports")
         assertTrue(File(exportsDir, "bowel_movements.csv").readText().contains("6"))
         assertTrue(File(exportsDir, "food_entries.csv").exists())
         assertTrue(File(exportsDir, "medication_entries.csv").exists())
+        assertTrue(File(exportsDir, "energy_entries.csv").exists())
+        assertTrue(File(exportsDir, "walk_entries.csv").exists())
     }
 
     @Test

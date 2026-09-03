@@ -1,13 +1,19 @@
 package com.crapp.ui.bowel
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,12 +25,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.crapp.data.model.Amount
+import com.crapp.data.model.Location
+import com.crapp.export.BowelMovementPhotoStore
 import com.crapp.ui.common.ConsistencySelector
 import com.crapp.ui.common.DateTimeField
+import com.crapp.ui.common.PhotoThumbnail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +47,23 @@ fun BowelMovementLogScreen(
     viewModel: BowelMovementLogViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val photoStore = remember { BowelMovementPhotoStore(context) }
+    var pendingPhotoUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        val uri = pendingPhotoUri
+        if (success && uri != null) {
+            viewModel.onPhotoCaptured(uri)
+        } else if (uri != null) {
+            // Camera was cancelled -- the empty MediaStore row created for it would
+            // otherwise sit as an orphan in the CrApp album forever.
+            photoStore.delete(uri.toString())
+        }
+        pendingPhotoUri = null
+    }
 
     LaunchedEffect(uiState.saved) {
         if (uiState.saved) onDone()
@@ -54,6 +85,7 @@ fun BowelMovementLogScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -61,6 +93,36 @@ fun BowelMovementLogScreen(
 
             Text(text = "Consistency (Purina scale)", style = MaterialTheme.typography.titleMedium)
             ConsistencySelector(value = uiState.consistency, onValueChange = viewModel::onConsistencyChange)
+
+            Text(text = "Amount", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Amount.entries.forEach { amount ->
+                    FilterChip(
+                        selected = uiState.amount == amount,
+                        onClick = { viewModel.onAmountChange(amount) },
+                        label = { Text(amount.displayName) }
+                    )
+                }
+            }
+
+            Text(text = "Location", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Location.entries.forEach { location ->
+                    FilterChip(
+                        selected = uiState.location == location,
+                        onClick = { viewModel.onLocationChange(location) },
+                        label = { Text(location.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    )
+                }
+            }
+            if (uiState.location == Location.OTHER) {
+                OutlinedTextField(
+                    value = uiState.locationOther,
+                    onValueChange = viewModel::onLocationOtherChange,
+                    label = { Text("Where? (optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = uiState.hasBlood, onCheckedChange = viewModel::onHasBloodChange)
@@ -77,6 +139,25 @@ fun BowelMovementLogScreen(
                 label = { Text("Notes") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Text(text = "Photo", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                val photoUri = uiState.photoUri
+                if (photoUri != null) {
+                    PhotoThumbnail(photoUri = photoUri)
+                    TextButton(onClick = viewModel::onRemovePhoto) { Text("Remove") }
+                } else {
+                    OutlinedButton(onClick = {
+                        val uri = viewModel.createPhotoCaptureTarget()
+                        if (uri != null) {
+                            pendingPhotoUri = uri
+                            takePictureLauncher.launch(uri)
+                        }
+                    }) {
+                        Text("Take Photo")
+                    }
+                }
+            }
 
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
                 Text("Save")

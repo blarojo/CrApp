@@ -28,5 +28,13 @@ data class FoodEntry(
     val timestamp: Instant,
     val foodId: Long,
     val amount: String? = null,
-    val mealType: MealType
+    val mealType: MealType,
+    /**
+     * Structured amount, additive to (not replacing) the free-text [amount] --
+     * docs/future-features.md's dose/amount spec. Only meaningful together with
+     * [amountUnit]; both null means "not recorded structurally," not zero.
+     */
+    val amountValue: Double? = null,
+    /** Unit for [amountValue], e.g. "cup", "g", "tbsp". Free text, not an enum -- units vary too much to enumerate. */
+    val amountUnit: String? = null
 )

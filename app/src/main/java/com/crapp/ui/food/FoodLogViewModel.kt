@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 
+/** Fixed unit choices for [FoodLogUiState.amountUnit] -- docs/future-features.md's dose/amount spec. */
+val FOOD_AMOUNT_UNITS = listOf("cup", "tbsp", "g")
+
 data class FoodLogUiState(
     val timestamp: Instant = Instant.now(),
     val selectedFood: Food? = null,
@@ -25,7 +28,10 @@ data class FoodLogUiState(
     val mealType: MealType = MealType.MEAL,
     val showAddNewDialog: Boolean = false,
     val isEditing: Boolean = false,
-    val saved: Boolean = false
+    val saved: Boolean = false,
+    /** Structured amount, additive to the free-text [amount] above -- raw text, parsed to Double on save. */
+    val amountValueText: String = "",
+    val amountUnit: String? = null
 )
 
 class FoodLogViewModel(
@@ -51,7 +57,9 @@ class FoodLogViewModel(
                             timestamp = entry.timestamp,
                             selectedFood = food,
                             amount = entry.amount ?: "",
-                            mealType = entry.mealType
+                            mealType = entry.mealType,
+                            amountValueText = entry.amountValue?.toString() ?: "",
+                            amountUnit = entry.amountUnit
                         )
                     }
                 }
@@ -73,6 +81,14 @@ class FoodLogViewModel(
 
     fun onMealTypeChange(mealType: MealType) {
         _uiState.update { it.copy(mealType = mealType) }
+    }
+
+    fun onAmountValueTextChange(text: String) {
+        _uiState.update { it.copy(amountValueText = text) }
+    }
+
+    fun onAmountUnitChange(unit: String) {
+        _uiState.update { it.copy(amountUnit = if (it.amountUnit == unit) null else unit) }
     }
 
     fun onShowAddNewDialog(show: Boolean) {
@@ -107,7 +123,9 @@ class FoodLogViewModel(
                 timestamp = state.timestamp,
                 foodId = food.id,
                 amount = state.amount.ifBlank { null },
-                mealType = state.mealType
+                mealType = state.mealType,
+                amountValue = state.amountValueText.toDoubleOrNull(),
+                amountUnit = state.amountUnit
             )
             if (editingId != -1L) repository.updateFoodEntry(entry) else repository.logFoodEntry(entry)
             _uiState.update { it.copy(saved = true) }

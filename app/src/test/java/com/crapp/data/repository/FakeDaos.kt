@@ -3,10 +3,12 @@ package com.crapp.data.repository
 import com.crapp.data.db.BowelMovementDao
 import com.crapp.data.db.FoodDao
 import com.crapp.data.db.FoodEntryDao
+import com.crapp.data.db.MedicationDao
 import com.crapp.data.db.MedicationEntryDao
 import com.crapp.data.model.BowelMovement
 import com.crapp.data.model.Food
 import com.crapp.data.model.FoodEntry
+import com.crapp.data.model.Medication
 import com.crapp.data.model.MedicationEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,6 +70,8 @@ class FakeFoodDao : FoodDao {
     private val _all = MutableStateFlow<List<Food>>(emptyList())
     private val _allByRecentUse = MutableStateFlow<List<Food>>(emptyList())
 
+    var foodEntryDao: FakeFoodEntryDao? = null
+
     override suspend fun insert(food: Food): Long {
         if (rows.values.any { it.name == food.name }) return -1L
         val id = if (food.id != 0L) food.id else nextId++
@@ -80,6 +84,14 @@ class FakeFoodDao : FoodDao {
         rows[food.id] = food
         publish()
     }
+
+    override suspend fun delete(food: Food) {
+        rows.remove(food.id)
+        publish()
+    }
+
+    override suspend fun countFoodEntriesReferencing(foodId: Long): Int =
+        foodEntryDao?.countByFoodId(foodId) ?: 0
 
     override suspend fun insertAll(foods: List<Food>) {
         foods.forEach { f -> rows[if (f.id != 0L) f.id else nextId++] = f }
@@ -139,6 +151,9 @@ class FakeFoodEntryDao : FoodEntryDao {
 
     override fun observeAll(): StateFlow<List<FoodEntry>> = _all
 
+    /** Test-only helper backing [FakeFoodDao.countFoodEntriesReferencing] -- not part of the real [FoodEntryDao] interface. */
+    fun countByFoodId(foodId: Long): Int = rows.values.count { it.foodId == foodId }
+
     override suspend fun getById(id: Long): FoodEntry? = rows[id]
 
     private fun publish() {
@@ -183,5 +198,44 @@ class FakeMedicationEntryDao : MedicationEntryDao {
 
     private fun publish() {
         _all.value = rows.values.sortedByDescending { it.timestamp }
+    }
+}
+
+class FakeMedicationDao : MedicationDao {
+    private val rows = linkedMapOf<Long, Medication>()
+    private var nextId = 1L
+    private val _all = MutableStateFlow<List<Medication>>(emptyList())
+    private val _allByRecentUse = MutableStateFlow<List<Medication>>(emptyList())
+
+    override suspend fun insert(medication: Medication): Long {
+        if (rows.values.any { it.name == medication.name }) return -1L
+        val id = if (medication.id != 0L) medication.id else nextId++
+        rows[id] = medication.copy(id = id)
+        publish()
+        return id
+    }
+
+    override suspend fun delete(medication: Medication) {
+        rows.remove(medication.id)
+        publish()
+    }
+
+    override suspend fun deleteAll() {
+        rows.clear()
+        publish()
+    }
+
+    override suspend fun getByName(name: String): Medication? = rows.values.firstOrNull { it.name == name }
+
+    override suspend fun getById(id: Long): Medication? = rows[id]
+
+    override fun observeAll(): StateFlow<List<Medication>> = _all
+
+    override fun observeAllSortedByRecentUse(): StateFlow<List<Medication>> = _allByRecentUse
+
+    private fun publish() {
+        val sorted = rows.values.sortedBy { it.name.lowercase() }
+        _all.value = sorted
+        _allByRecentUse.value = sorted
     }
 }

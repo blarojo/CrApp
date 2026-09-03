@@ -56,6 +56,8 @@ fun HistoryScreen(
     onEditBowelMovement: (Long) -> Unit,
     onEditFood: (Long) -> Unit,
     onEditMedication: (Long) -> Unit,
+    onEditEnergy: (Long) -> Unit,
+    onEditWalk: (Long) -> Unit,
     onExport: () -> Unit,
     viewModel: HistoryViewModel = viewModel()
 ) {
@@ -96,6 +98,16 @@ fun HistoryScreen(
                     onClick = { viewModel.toggleType(HistoryEntryType.MEDICATION) },
                     label = { Text("Medication") }
                 )
+                FilterChip(
+                    selected = HistoryEntryType.ENERGY in uiState.filter.types,
+                    onClick = { viewModel.toggleType(HistoryEntryType.ENERGY) },
+                    label = { Text("Energy") }
+                )
+                FilterChip(
+                    selected = HistoryEntryType.WALK in uiState.filter.types,
+                    onClick = { viewModel.toggleType(HistoryEntryType.WALK) },
+                    label = { Text("Walk") }
+                )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -123,6 +135,8 @@ fun HistoryScreen(
                                     is HistoryEntry.BowelMovementEntry -> onEditBowelMovement(entry.id)
                                     is HistoryEntry.FoodLogEntry -> onEditFood(entry.id)
                                     is HistoryEntry.MedicationLogEntry -> onEditMedication(entry.id)
+                                    is HistoryEntry.EnergyLogEntry -> onEditEnergy(entry.id)
+                                    is HistoryEntry.WalkLogEntry -> onEditWalk(entry.id)
                                 }
                             },
                             onLongClick = { viewModel.requestDelete(entry) }
@@ -197,11 +211,22 @@ private fun HistoryRow(
                 if (m.hasBlood) add("blood")
                 if (m.hasMucus) add("mucus")
             }
+            val subtitleExtras = buildList {
+                m.amount?.let { add(it.displayName) }
+                when (m.location) {
+                    com.crapp.data.model.Location.OTHER -> add(m.locationOther?.let { "Other: $it" } ?: "Other")
+                    null -> {}
+                    else -> add(m.location.name.lowercase().replaceFirstChar { it.uppercase() })
+                }
+                if (m.isNightTime) add("night")
+                if (m.photoUri != null) add("📷")
+                if (!m.notes.isNullOrBlank()) add(m.notes)
+            }
             HistoryRowContent(
                 badgeText = "💩 BOWEL",
                 badgeColor = Color(0xFF6D4C41),
                 title = "Consistency ${m.consistency}" + if (flags.isNotEmpty()) " (${flags.joinToString()})" else "",
-                subtitle = m.notes ?: ""
+                subtitle = subtitleExtras.joinToString(" · ")
             )
         }
         is HistoryEntry.FoodLogEntry -> {
@@ -221,6 +246,24 @@ private fun HistoryRow(
                 badgeColor = Color(0xFF1565C0),
                 title = e.name,
                 subtitle = e.dose ?: ""
+            )
+        }
+        is HistoryEntry.EnergyLogEntry -> {
+            val e = entry.entry
+            HistoryRowContent(
+                badgeText = "⚡ ENERGY",
+                badgeColor = Color(0xFFF9A825),
+                title = e.level.displayName,
+                subtitle = e.notes ?: ""
+            )
+        }
+        is HistoryEntry.WalkLogEntry -> {
+            val e = entry.entry
+            HistoryRowContent(
+                badgeText = "🚶 WALK",
+                badgeColor = Color(0xFF00796B),
+                title = "${e.bowelMovementCount} bowel movement" + if (e.bowelMovementCount == 1) "" else "s",
+                subtitle = e.notes ?: ""
             )
         }
     }
