@@ -108,20 +108,32 @@ bowel-movement count in large type, last-logged relative time, and — new — t
 food/medication/**energy**/**walk-report** counts all in one line (previously only
 food and medication were surfaced here).
 
-**History** (below a divider, scrolls): a 7d / 14d / 30d / 90d window chip row drives
-every chart in this section together.
-- **Consistency trend chart** — line chart of recent consistency scores; tap any
-  point to show its exact date/time + value in a caption below the chart.
-- **Movements-per-day bar chart** — zero-filled for days with no entries; scrolls
-  horizontally rather than squeezing bars for a longer window; tap a bar or its day
-  label to show the full date + count.
+**History** (below a divider, scrolls): a **1d** / 7d / 14d / 30d / 90d window chip
+row drives every chart and stat tile in this section together, filtering by real
+calendar days (not by movement count — a past bug made "7d" mean "last 7 movements").
+- **Consistency trend chart** — line chart of recent consistency scores, now a true
+  time scale: each day gets an equal-width column and a point's position within its
+  day reflects its actual time of day (was previously evenly spaced by index,
+  regardless of when things actually happened). Scrolls horizontally with one date
+  label per day (was just the first/last date at the chart's ends) and opens scrolled
+  to the latest day. Dog-walker-reported movements (no per-movement timestamp) are
+  drawn as small unscored tick marks spread across an assumed one-hour window at
+  their logged time, distinct from the scored line — see `ConsistencyTrendChart`'s
+  KDoc. Tap any point to show its exact date/time + value in a caption below.
+- **Movements-per-day bar chart** — every movement, including dog-walker-reported
+  counts (previously undercounted days where a walk was only logged as an aggregate
+  count); zero-filled for days with no entries; date-labelled bars (was day-of-week
+  initials, ambiguous past a week); scrolls horizontally and opens scrolled to the
+  latest day rather than the start of a long window; tap a bar or its label to show
+  the full date + count.
 - **Walk / Night / Inside home / Garden stat tiles** — window totals. Walk sums
   individually-tagged Location = Walk movements *plus* dog-walker-reported
   Walk-entry counts (the two are never double-counted at entry time, so summing them
   is safe).
-- **Per-day breakdown charts** — one bar chart each for Walks, Night movements,
-  Inside-home movements, and Garden movements per day, so a pattern in *where* or
-  *when* movements happen is visible at a glance rather than only the aggregate
+- **Per-day breakdown charts** — one bar chart each for **movements during walks**,
+  night movements, inside-home movements, and garden movements per day (same
+  date-labelled, auto-scrolled-to-latest bar chart as above), so a pattern in *where*
+  or *when* movements happen is visible at a glance rather than only the aggregate
   count. Each shows a plain-language empty state ("No movements tagged … in this
   window") instead of an all-zero chart when a category has no data yet.
 

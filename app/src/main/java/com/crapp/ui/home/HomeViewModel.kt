@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -33,11 +34,25 @@ data class DailyCount(val date: LocalDate, val count: Int)
  * simpler to reason about and all of them describe the same recent period.
  */
 enum class TrendWindow(val days: Int, val label: String) {
+    ONE_DAY(1, "1d"),
     SEVEN_DAYS(7, "7d"),
     FOURTEEN_DAYS(14, "14d"),
     THIRTY_DAYS(30, "30d"),
     NINETY_DAYS(90, "90d")
 }
+
+/**
+ * A dog-walker-reported [WalkEntry] has no per-movement detail -- just a count for
+ * the outing -- so there's no real timestamp for any individual movement in it. To
+ * still place them sensibly on the consistency chart's time axis (rather than
+ * omitting them, or stacking all of them at one instant), each is assumed to have
+ * happened somewhere within this long a window starting at the entry's logged time,
+ * and spread out evenly within it. This is a display approximation only -- it's never
+ * treated as real per-movement data, and no consistency score is invented for it (see
+ * [HomeUiState.walkTicksInWindow], plotted as unscored tick marks, never as points on
+ * the scored line).
+ */
+private val ASSUMED_WALK_DURATION: Duration = Duration.ofHours(1)
 
 data class HomeUiState(
     val bowelMovementsToday: Int = 0,
@@ -49,6 +64,13 @@ data class HomeUiState(
     val hasAnyEntries: Boolean = false,
     val window: TrendWindow = TrendWindow.FOURTEEN_DAYS,
     val consistencyTrend: List<ConsistencyPoint> = emptyList(),
+    /**
+     * Assumed times of dog-walker-reported movements within the window -- see
+     * [ASSUMED_WALK_DURATION]. Plotted on the consistency chart's time axis as
+     * unscored tick marks, distinct from the scored [consistencyTrend] line.
+     */
+    val walkTicksInWindow: List<Instant> = emptyList(),
+    /** Every bowel movement in the window, including dog-walker-reported counts (spec 3/5). */
     val dailyFrequency: List<DailyCount> = emptyList(),
     /** Per-day breakdown of the window totals below -- one bar chart each on the dashboard. */
     val dailyWalk: List<DailyCount> = emptyList(),
@@ -74,6 +96,10 @@ private data class BaseData(
     val medications: List<MedicationEntry>,
     val walkEntries: List<WalkEntry>
 )
+
+/** Adds counts from two per-day maps together, keeping every date that appears in either. */
+private fun sumCounts(a: Map<LocalDate, Int>, b: Map<LocalDate, Int>): Map<LocalDate, Int> =
+    (a.keys + b.keys).associateWith { date -> (a[date] ?: 0) + (b[date] ?: 0) }
 
 /**
  * Backs the Dashboard (Home screen, docs/development-plan.md Phase 7): a "today" view
@@ -115,24 +141,31 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             walkEntries.map { it.timestamp }
         ).flatten()
 
-        // The DAO returns newest-first; the trend chart reads left-to-right
-        // chronologically, so re-sort ascending before taking the most recent window.
-        val trend = movements
-            .sortedBy { it.timestamp }
-            .takeLast(window.days)
-            .map { ConsistencyPoint(it.timestamp, it.consistency) }
-
         val windowStart = today.minusDays((window.days - 1).toLong())
         val movementsInWindow = movements.filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
         val walkEntriesInWindow = walkEntries.filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
+
+        // Real calendar-day filtering (was previously "last N *movements*", which made
+        // the 7d/14d/etc. window filter by point count rather than by actual date range).
+        val trend = movementsInWindow.sortedBy { it.timestamp }.map { ConsistencyPoint(it.timestamp, it.consistency) }
+
+        // Dog-walker-reported counts have no per-movement timestamp; assume they're spread
+        // evenly across ASSUMED_WALK_DURATION starting at the entry's logged time, so the
+        // consistency chart's time axis has *something* sensible to show for them (as
+        // unscored ticks, never as invented consistency values -- see the class doc above).
+        val walkTicks = walkEntriesInWindow.flatMap { entry ->
+            val count = entry.bowelMovementCount.coerceAtLeast(0)
+            (0 until count).map { i ->
+                val fraction = (i + 0.5) / count
+                entry.timestamp.plusSeconds((fraction * ASSUMED_WALK_DURATION.seconds).toLong())
+            }
+        }
 
         fun dailyCounts(countsByDay: Map<LocalDate, Int>): List<DailyCount> =
             (0 until window.days).map { offset ->
                 val date = windowStart.plusDays(offset.toLong())
                 DailyCount(date, countsByDay[date] ?: 0)
             }
-
-        val overallCountsByDay = movementsInWindow.groupingBy { it.timestamp.toLocalDate() }.eachCount()
 
         val walkFromMovementsByDay = movementsInWindow
             .filter { it.location == Location.WALK }
@@ -141,9 +174,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val walkFromEntriesByDay = walkEntriesInWindow
             .groupingBy { it.timestamp.toLocalDate() }
             .fold(0) { acc, entry -> acc + entry.bowelMovementCount }
-        val walkCountsByDay = (walkFromMovementsByDay.keys + walkFromEntriesByDay.keys).associateWith { date ->
-            (walkFromMovementsByDay[date] ?: 0) + (walkFromEntriesByDay[date] ?: 0)
-        }
+        val walkCountsByDay = sumCounts(walkFromMovementsByDay, walkFromEntriesByDay)
+
+        // "Movements per day" is every movement that happened, including dog-walker
+        // reports -- previously it silently excluded those, undercounting any day a
+        // walk was only reported as an aggregate count.
+        val overallCountsByDay = sumCounts(
+            movementsInWindow.groupingBy { it.timestamp.toLocalDate() }.eachCount(),
+            walkFromEntriesByDay
+        )
 
         val nightCountsByDay = movementsInWindow.filter { it.isNightTime }
             .groupingBy { it.timestamp.toLocalDate() }.eachCount()
@@ -162,6 +201,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             hasAnyEntries = allTimestamps.isNotEmpty(),
             window = window,
             consistencyTrend = trend,
+            walkTicksInWindow = walkTicks,
             dailyFrequency = dailyCounts(overallCountsByDay),
             dailyWalk = dailyCounts(walkCountsByDay),
             dailyNight = dailyCounts(nightCountsByDay),

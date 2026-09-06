@@ -118,7 +118,13 @@ fun HomeScreen(
                 }
 
                 DashboardCard(title = "Consistency trend") {
-                    ConsistencyTrendChart(points = uiState.consistencyTrend, modifier = Modifier.fillMaxWidth())
+                    ConsistencyTrendChart(
+                        points = uiState.consistencyTrend,
+                        windowStart = uiState.dailyFrequency.first().date,
+                        windowDays = uiState.dailyFrequency.size,
+                        walkTicks = uiState.walkTicksInWindow,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
                 DashboardCard(title = "Movements per day") {
                     FrequencyBarChart(days = uiState.dailyFrequency, modifier = Modifier.fillMaxWidth())
@@ -138,7 +144,7 @@ fun HomeScreen(
                     StatTile(emoji = "🌳", label = "Garden", value = uiState.gardenMovementsInWindow, modifier = Modifier.weight(1f))
                 }
 
-                DashboardCard(title = "🚶 Walks per day") {
+                DashboardCard(title = "🚶 Movements during walks per day") {
                     CategoryFrequencyOrEmpty(uiState.dailyWalk, "No walk-tagged movements in this window.")
                 }
                 DashboardCard(title = "🌙 Night movements per day") {

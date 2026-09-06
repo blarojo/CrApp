@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,9 +31,9 @@ import com.crapp.ui.home.DailyCount
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE")
+private val dayLabelFormatter = DateTimeFormatter.ofPattern("MMM d")
 private val fullDateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
-private val barColumnWidth = 28.dp
+private val barColumnWidth = 44.dp
 private val chartHeight = 96.dp
 
 /**
@@ -42,8 +43,10 @@ private val chartHeight = 96.dp
  * docs/development-plan.md Phase 7.
  *
  * Scrolls horizontally rather than squeezing bars narrower for a longer window
- * (e.g. 90 days), and tapping a bar/label shows its full date -- the day-of-week
- * label alone is ambiguous once a window spans more than a single week.
+ * (e.g. 90 days), opens scrolled to the latest (rightmost) day rather than the start
+ * of the window -- otherwise a long window opens on a wall of empty early days --
+ * and each bar is labelled with its actual date rather than just a day-of-week
+ * initial, which repeats and is ambiguous once a window spans more than a week.
  */
 @Composable
 fun FrequencyBarChart(
@@ -59,6 +62,8 @@ fun FrequencyBarChart(
     val maxCount = remember(days) { (days.maxOfOrNull { it.count } ?: 0).coerceAtLeast(1) }
     var selectedDate by remember(days) { mutableStateOf<LocalDate?>(null) }
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(days.firstOrNull()?.date, days.size) { scrollState.scrollTo(scrollState.maxValue) }
 
     fun toggle(date: LocalDate) {
         selectedDate = if (selectedDate == date) null else date
@@ -109,7 +114,7 @@ fun FrequencyBarChart(
         ) {
             days.forEach { day ->
                 Text(
-                    dayOfWeekFormatter.format(day.date),
+                    dayLabelFormatter.format(day.date),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (day.date == selectedDate) selectedColor else labelColor,
                     textAlign = TextAlign.Center,
