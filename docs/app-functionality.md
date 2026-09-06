@@ -18,7 +18,7 @@ Screen: **Log/Edit Bowel Movement** (`BowelMovementLogScreen`).
 | Field | Status | Notes |
 |---|---|---|
 | Timestamp | ✅ | Defaults to now; editable date + time pickers. |
-| Consistency (1–7) | ✅ | Purina Fecal Scoring Chart, tap-to-select with an icon + description per score. |
+| Consistency (1–7) | ✅ | Purina Fecal Scoring Chart, tap-to-select with an icon + description per score. Chips are ordered **7 down to 1** (highest/loosest first) rather than 1 up to 7, since a dog whose scores cluster at the high end shouldn't have to scroll to reach them. A "What do these scores mean?" link opens [Purina's own reference chart](https://vetcentre.purina.co.uk/news-articles/faecal-score-chart) in the browser. |
 | Amount | 🧪 | Three-option tap selector: **Some drips** / **Medium amount** / **A lot of poo**. Independent of consistency — a small amount can still be liquid. Optional. |
 | When / Where | 🧪 | Three tap chips: **Night** / **Walk** / **Home**. **Night** is an independent toggle (can be combined with Walk or Home) pre-filled from a configurable night window (default 10pm–6am) but always user-overridable; **Walk** / **Home** set the location and are mutually exclusive. (The `Location.OTHER` value and its free-text field still exist in the data model for backward compatibility but are no longer exposed in this UI.) |
 | Blood / mucus present | ✅ | Two checkboxes. |

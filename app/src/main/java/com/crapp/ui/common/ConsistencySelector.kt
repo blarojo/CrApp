@@ -13,9 +13,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 
 /**
@@ -34,16 +36,28 @@ private val consistencyDescriptions = mapOf(
     7 to "Liquid, no texture"
 )
 
+/** Purina's own reference page for what each of the 7 scores looks like -- linked from the selector below. */
+const val PURINA_FECAL_SCORING_CHART_URL = "https://vetcentre.purina.co.uk/news-articles/faecal-score-chart"
+
 @Composable
 fun ConsistencySelector(
     value: Int,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val uriHandler = LocalUriHandler.current
     Column(modifier = modifier.fillMaxWidth()) {
+        TextButton(
+            onClick = { uriHandler.openUri(PURINA_FECAL_SCORING_CHART_URL) },
+            modifier = Modifier.padding(bottom = 4.dp)
+        ) {
+            Text("What do these scores mean? (Purina reference chart) ↗")
+        }
+        // Descending (7 -> 1): Mango's scores cluster at the high end, so leading
+        // with them means no scrolling for the common case.
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items(7) { index ->
-                val score = index + 1
+                val score = 7 - index
                 val selected = value == score
                 Surface(
                     onClick = { onValueChange(score) },
