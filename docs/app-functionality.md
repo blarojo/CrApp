@@ -20,7 +20,7 @@ Screen: **Log/Edit Bowel Movement** (`BowelMovementLogScreen`).
 | Timestamp | ✅ | Defaults to now; editable date + time pickers. |
 | Consistency (1–7) | ✅ | Purina Fecal Scoring Chart, tap-to-select with an icon + description per score. Chips are ordered **7 down to 1** (highest/loosest first) rather than 1 up to 7, since a dog whose scores cluster at the high end shouldn't have to scroll to reach them. A "What do these scores mean?" link opens [Purina's own reference chart](https://vetcentre.purina.co.uk/news-articles/faecal-score-chart) in the browser. |
 | Amount | 🧪 | Three-option tap selector: **Some drips** / **Medium amount** / **A lot of poo**. Independent of consistency — a small amount can still be liquid. Optional. |
-| When / Where | 🧪 | Three tap chips: **Night** / **Walk** / **Home**. **Night** is an independent toggle (can be combined with Walk or Home) pre-filled from a configurable night window (default 10pm–6am) but always user-overridable; **Walk** / **Home** set the location and are mutually exclusive. (The `Location.OTHER` value and its free-text field still exist in the data model for backward compatibility but are no longer exposed in this UI.) |
+| When / Where | 🧪 | Four tap chips: **Night** / **Walk** / **Inside home** / **Garden**. **Night** is an independent toggle (can be combined with any location) pre-filled from a configurable night window (default 10pm–6am) but always user-overridable; **Walk** / **Inside home** / **Garden** set the location and are mutually exclusive. (The `Location.OTHER` value and its free-text field still exist in the data model for backward compatibility but are no longer exposed in this UI.) |
 | Blood / mucus present | ✅ | Two checkboxes. |
 | Notes | ✅ | Free text. |
 | Photo | 🧪 | "Take Photo" opens the device camera, saving into a shared, user-visible **`Pictures/CrApp`** album via `MediaStore` — deliberately *not* app-private storage, so photos survive an uninstall/reinstall. Thumbnail shown inline (decoded on-device, no image-loading library); tap "Remove" to delete. |
@@ -100,23 +100,36 @@ Screen: **History** (`HistoryScreen`).
 
 ## 7. Dashboard (Home screen)
 
-Screen: **Home** (`HomeScreen`).
+Screen: **Home** (`HomeScreen`). Split into two scroll sections so the screen answers
+"how's today going?" before "what's the recent pattern?" 🧪
 
-- Today's summary card: movement count, last-logged time, food/medication counts
-  today. ✅
-- **Consistency trend chart** — line chart of recent consistency scores.
-  🧪 **Tap any point** to show its exact date/time + value in a caption below the
-  chart (was previously hover-only information, which a touch device doesn't have).
+**Today** (top, always visible without scrolling): a filled hero card showing today's
+bowel-movement count in large type, last-logged relative time, and — new — today's
+food/medication/**energy**/**walk-report** counts all in one line (previously only
+food and medication were surfaced here).
+
+**History** (below a divider, scrolls): a 7d / 14d / 30d / 90d window chip row drives
+every chart in this section together.
+- **Consistency trend chart** — line chart of recent consistency scores; tap any
+  point to show its exact date/time + value in a caption below the chart.
 - **Movements-per-day bar chart** — zero-filled for days with no entries; scrolls
-  horizontally rather than squeezing bars for a longer window; tap a bar or its
-  day label to show the full date + count. 🧪
-- **Adjustable time window** 🧪 — a 7d / 14d / 30d / 90d chip row above the charts
-  now drives both charts together (was a fixed last-14-points / last-7-days).
-- **Night movements** / **Walk movements** stat tiles for the selected window 🧪 —
-  Night counts bowel movements tagged night-time; Walk sums individually-tagged
-  Location = Walk movements *plus* dog-walker-reported Walk-entry counts (the two
-  are never double-counted at entry time, so summing them is safe).
-- `+` quick-add FAB: Bowel Movement, Food, Medication, **Energy** 🧪, **Walk** 🧪.
+  horizontally rather than squeezing bars for a longer window; tap a bar or its day
+  label to show the full date + count.
+- **Walk / Night / Inside home / Garden stat tiles** — window totals. Walk sums
+  individually-tagged Location = Walk movements *plus* dog-walker-reported
+  Walk-entry counts (the two are never double-counted at entry time, so summing them
+  is safe).
+- **Per-day breakdown charts** — one bar chart each for Walks, Night movements,
+  Inside-home movements, and Garden movements per day, so a pattern in *where* or
+  *when* movements happen is visible at a glance rather than only the aggregate
+  count. Each shows a plain-language empty state ("No movements tagged … in this
+  window") instead of an all-zero chart when a category has no data yet.
+
+Cards throughout use a slightly larger corner radius and subtle elevation, and
+"TODAY"/"HISTORY" section labels mark the two scroll regions — a visual refresh on
+top of the same underlying charts.
+
+`+` quick-add FAB: Bowel Movement, Food, Medication, **Energy** 🧪, **Walk** 🧪.
 
 ## 8. CSV Export
 

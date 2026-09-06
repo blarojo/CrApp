@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
@@ -106,10 +107,13 @@ fun BowelMovementLogScreen(
             }
 
             Text(text = "When / Where", style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // "Night" is an independent toggle (can combine with Walk or Home below),
-                // pre-filled from the configured night window but user-overridable -- see
-                // BowelMovementLogViewModel.onNightTimeChange.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
+                // "Night" is an independent toggle (can combine with Walk/Home/Garden
+                // below), pre-filled from the configured night window but user-overridable
+                // -- see BowelMovementLogViewModel.onNightTimeChange.
                 FilterChip(
                     selected = uiState.isNightTime,
                     onClick = { viewModel.onNightTimeChange(!uiState.isNightTime) },
@@ -118,12 +122,17 @@ fun BowelMovementLogScreen(
                 FilterChip(
                     selected = uiState.location == Location.WALK,
                     onClick = { viewModel.onLocationChange(Location.WALK) },
-                    label = { Text("Walk") }
+                    label = { Text(Location.WALK.displayName) }
                 )
                 FilterChip(
                     selected = uiState.location == Location.HOME,
                     onClick = { viewModel.onLocationChange(Location.HOME) },
-                    label = { Text("Home") }
+                    label = { Text(Location.HOME.displayName) }
+                )
+                FilterChip(
+                    selected = uiState.location == Location.GARDEN,
+                    onClick = { viewModel.onLocationChange(Location.GARDEN) },
+                    label = { Text(Location.GARDEN.displayName) }
                 )
             }
 

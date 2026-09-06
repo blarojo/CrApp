@@ -216,7 +216,7 @@ private fun HistoryRow(
                 when (m.location) {
                     com.crapp.data.model.Location.OTHER -> add(m.locationOther?.let { "Other: $it" } ?: "Other")
                     null -> {}
-                    else -> add(m.location.name.lowercase().replaceFirstChar { it.uppercase() })
+                    else -> add(m.location.displayName)
                 }
                 if (m.isNightTime) add("night")
                 if (m.photoUri != null) add("📷")

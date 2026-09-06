@@ -151,6 +151,14 @@ just a rollup of the first, so one schema change covers both.
   for two different situations (the user personally walking and logging each
   movement, vs. the dog walker reporting only a count) — not double-entered for the
   same walk. The app doesn't enforce this; see spec 5's UI warning.
+- **Implemented update:** shipped as `enum class Location(val displayName: String) {
+  HOME("Inside home"), GARDEN("Garden"), WALK("Walk"), OTHER("Other") }` — a `GARDEN`
+  value was added (outdoor-but-not-a-walk is common enough to want its own bucket
+  rather than falling into `OTHER`'s free text), and `HOME`'s UI label changed to
+  "Inside home" so it reads unambiguously next to "Garden". No migration needed
+  (`Location` is still stored as its constant name via `Converters.kt`, and `GARDEN`
+  is just a new valid string). The dashboard also gained a per-day breakdown chart
+  and window stat tile for each of Walk/Night/Inside home/Garden.
 
 ### 4. Energy level logging
 
