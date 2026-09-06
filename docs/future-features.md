@@ -4,6 +4,34 @@ Ideas beyond the MVP described in [development-plan.md](development-plan.md). No
 here is scheduled — add to this list freely as things come up; prune or promote items
 into active development as needed.
 
+## Implementation & testing status
+
+All 12 specs below were reviewed and 10 of them (excluding OCR and multi-dog) were
+built in one batch, then click-tested on-device over several follow-up sessions. This
+table is that status as of the most recent session — see each spec's own section
+below for the full design, and `docs/app-functionality.md` for the always-current
+feature reference.
+
+| # | Feature | Implemented | Tested | Notes |
+|---|---|---|---|---|
+| 1 | Bowel movement amount (1–3 scale) | ✅ Yes | ✅ Yes | Amount chips (Some drips / Medium amount / A lot of poo); saved, edited, and displayed in History and the dashboard during device testing. |
+| 2 | Tap-to-inspect + adjustable dashboard window | ✅ Yes | 🧪 Partial | Tap-to-inspect and the 7/14/30/90d window chips were verified on-device in an earlier session. This session added a 1d option and fixed real bugs (the window was filtering by movement *count* not calendar days; chart points were evenly spaced by index instead of by actual time; dog-walker-reported movements were invisible on the chart) — those fixes build clean and pass unit tests but haven't been click-tested yet (phone was disconnected this round). |
+| 3 | Bowel movement location + night-time (+ Garden) | ✅ Yes | ✅ Yes | Night / Walk / Inside home / Garden chips, `isNightTime`, and the matching dashboard tiles/charts were all round-tripped on-device (save → dashboard updates → shows correctly in History → edit screen confirms it → delete → dashboard reverts). |
+| 4 | Energy level logging | ✅ Yes | 🧪 Partial | The 5 named energy levels render correctly on the log screen and real logged entries display correctly in History/dashboard; no dedicated save-then-delete round-trip test was run for this one specifically. |
+| 5 | Walker-logged walk summary | ✅ Yes | ✅ Yes | Full round-trip tested: saved a 3-count walk entry, confirmed the dashboard total updated correctly (this was also the exact bug fixed earlier in this session — the dashboard was silently ignoring these), deleted it, confirmed the total reverted. |
+| 6 | Wear OS companion app | ✅ Yes | ❌ No | The `:wear` module and the phone-side sync service both build and install correctly, but there's no physical or emulated Wear OS watch available to actually test the watch UI or the phone↔watch sync. |
+| 7 | Reminders / notifications | ✅ Yes | 🧪 Partial | The enable toggle, the real Android `POST_NOTIFICATIONS` permission prompt, the threshold chips, and the underlying WorkManager periodic job registration were all verified on-device (`dumpsys jobscheduler` shows it scheduled and already ran once). The real "no movement in 24h+" notification firing wasn't observed live, since that needs a real elapsed day with no logging. |
+| 8 | Photo attachment | ✅ Yes | 🧪 Partial | The MediaStore save/remove/thumbnail flow is implemented; camera launch and cancel-cleanup were verified, but an actual successful photo capture couldn't be automated via `adb` (this phone's camera app doesn't respond to synthetic shutter taps) — a real photo capture still needs your manual test. |
+| 9 | Structured ingredient data | ✅ Yes | ✅ Yes (backend only) | The `Ingredient`/`FoodIngredient` tables, the parser, and the synonym-based canonicalization were verified correct against the real 4 seeded foods via direct on-device database inspection. There's no UI to click-test, by design — it's backend plumbing feeding a future insights feature, not a user-facing screen yet. |
+| 10 | Structured dose/amount fields | ✅ Yes | ✅ Yes | Food side fully round-tripped this session (value 1, unit "tin (400g)", confirmed via the edit screen, then deleted). Medication side: the dose value field and mg/ml/mcg unit chips were confirmed present and rendering correctly, but no dedicated save round-trip was run for medication dose specifically. |
+| 11 | Photo-based ingredient capture (OCR) | ❌ No | ❌ No | Explicitly deferred/excluded from the implementation batch (needs ML Kit, a new dependency). |
+| 12 | Multi-dog support | ❌ No | ❌ No | Explicitly deferred/excluded — the highest-risk, largest-scope item in this list; not started. |
+
+The top-of-backlog "Good DevEx and snappy UI design" item isn't a discrete feature to
+implement/test — it's an ongoing engineering principle this project has generally
+followed (fast Gradle iteration, tap-first logging screens with no dead time), not
+tracked in the table above.
+
 ## Backlog
 
 - [ ] **Good DevEx and snappy UI design** — keep the app fast and pleasant to build on
