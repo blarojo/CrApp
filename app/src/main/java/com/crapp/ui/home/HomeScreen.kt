@@ -39,6 +39,7 @@ import com.crapp.AppConfig
 import com.crapp.ui.common.AddEntryFab
 import com.crapp.ui.common.AddEntryOption
 import com.crapp.ui.common.ConsistencyTrendChart
+import com.crapp.ui.common.EnergyTrendChart
 import com.crapp.ui.common.FrequencyBarChart
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +129,14 @@ fun HomeScreen(
                 }
                 DashboardCard(title = "Movements per day") {
                     FrequencyBarChart(days = uiState.dailyFrequency, modifier = Modifier.fillMaxWidth())
+                }
+                DashboardCard(title = "⚡ Energy trend") {
+                    EnergyTrendChart(
+                        points = uiState.energyTrend,
+                        windowStart = uiState.dailyFrequency.first().date,
+                        windowDays = uiState.dailyFrequency.size,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 Text(

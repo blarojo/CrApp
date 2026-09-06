@@ -126,6 +126,11 @@ calendar days (not by movement count — a past bug made "7d" mean "last 7 movem
   initials, ambiguous past a week); scrolls horizontally and opens scrolled to the
   latest day rather than the start of a long window; tap a bar or its label to show
   the full date + count.
+- **Energy trend chart** 🧪 — new. Same time-scaled engine as the consistency chart
+  (`ScoreTrendChart`, shared by both), plotting each `EnergyLevel`'s position (1-5,
+  low to high) over real time with one date label per day. The y-axis shows plain
+  numbers, but tapping a point shows its actual level name (e.g. "Normal") rather
+  than the number, since the 5 levels aren't meant to be memorized as digits.
 - **Walk / Night / Inside home / Garden stat tiles** — window totals. Walk sums
   individually-tagged Location = Walk movements *plus* dog-walker-reported
   Walk-entry counts (the two are never double-counted at entry time, so summing them

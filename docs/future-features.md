@@ -15,9 +15,9 @@ feature reference.
 | # | Feature | Implemented | Tested | Notes |
 |---|---|---|---|---|
 | 1 | Bowel movement amount (1–3 scale) | ✅ Yes | ✅ Yes | Amount chips (Some drips / Medium amount / A lot of poo); saved, edited, and displayed in History and the dashboard during device testing. |
-| 2 | Tap-to-inspect + adjustable dashboard window | ✅ Yes | 🧪 Partial | Tap-to-inspect and the 7/14/30/90d window chips were verified on-device in an earlier session. This session added a 1d option and fixed real bugs (the window was filtering by movement *count* not calendar days; chart points were evenly spaced by index instead of by actual time; dog-walker-reported movements were invisible on the chart) — those fixes build clean and pass unit tests but haven't been click-tested yet (phone was disconnected this round). |
+| 2 | Tap-to-inspect + adjustable dashboard window | ✅ Yes | ✅ Yes | The 1d window option, the real calendar-day filtering fix, the true time-scaled x-axis, per-day date labels, dog-walker tick marks, and tap-to-inspect (showing "Sept 3, 2:00 pm — Normal") were all verified on-device this session, including the new Energy chart sharing the same engine. |
 | 3 | Bowel movement location + night-time (+ Garden) | ✅ Yes | ✅ Yes | Night / Walk / Inside home / Garden chips, `isNightTime`, and the matching dashboard tiles/charts were all round-tripped on-device (save → dashboard updates → shows correctly in History → edit screen confirms it → delete → dashboard reverts). |
-| 4 | Energy level logging | ✅ Yes | 🧪 Partial | The 5 named energy levels render correctly on the log screen and real logged entries display correctly in History/dashboard; no dedicated save-then-delete round-trip test was run for this one specifically. |
+| 4 | Energy level logging | ✅ Yes | ✅ Yes | Full round-trip tested on-device this session: saved a "Low energy" entry, confirmed it appeared correctly on the new Energy trend chart and in the Today card's count, deleted it via History, confirmed both reverted. |
 | 5 | Walker-logged walk summary | ✅ Yes | ✅ Yes | Full round-trip tested: saved a 3-count walk entry, confirmed the dashboard total updated correctly (this was also the exact bug fixed earlier in this session — the dashboard was silently ignoring these), deleted it, confirmed the total reverted. |
 | 6 | Wear OS companion app | ✅ Yes | ❌ No | The `:wear` module and the phone-side sync service both build and install correctly, but there's no physical or emulated Wear OS watch available to actually test the watch UI or the phone↔watch sync. |
 | 7 | Reminders / notifications | ✅ Yes | 🧪 Partial | The enable toggle, the real Android `POST_NOTIFICATIONS` permission prompt, the threshold chips, and the underlying WorkManager periodic job registration were all verified on-device (`dumpsys jobscheduler` shows it scheduled and already ran once). The real "no movement in 24h+" notification firing wasn't observed live, since that needs a real elapsed day with no logging. |
@@ -237,7 +237,14 @@ for both rather than deriving the pattern twice.
   entities).
 - **Open questions:** is energy logged once/day, or multiple times? If once/day, a
   simpler `UNIQUE(date)` constraint might be more correct than a plain log table —
-  needs a decision before implementing.
+  needs a decision before implementing. **Resolved in practice:** shipped as a plain
+  log table (multiple entries/day allowed), matching real usage observed on-device.
+- **Implemented update:** the dashboard energy trend line was added as
+  `EnergyTrendChart`, sharing its rendering engine (`ScoreTrendChart`) with the
+  consistency chart rather than being a separate implementation — same real
+  time-scaled x-axis, one date label per day, tap-to-inspect. The y-axis plots
+  `EnergyLevel.ordinal + 1` (1-5) but the tap caption shows the level's
+  `displayName` instead of the bare number.
 
 ### 5. Walker-logged walk summary
 

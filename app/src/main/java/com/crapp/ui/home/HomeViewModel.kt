@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
 import com.crapp.data.model.BowelMovement
 import com.crapp.data.model.EnergyEntry
+import com.crapp.data.model.EnergyLevel
 import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.Location
 import com.crapp.data.model.MedicationEntry
@@ -23,6 +24,9 @@ import java.time.ZoneId
 
 /** One bowel movement's consistency score, for the trend chart. */
 data class ConsistencyPoint(val timestamp: Instant, val consistency: Int)
+
+/** One energy-level read, for the energy trend chart. */
+data class EnergyPoint(val timestamp: Instant, val level: EnergyLevel)
 
 /** A count of some category of event for a single calendar day, for the frequency charts. */
 data class DailyCount(val date: LocalDate, val count: Int)
@@ -64,6 +68,7 @@ data class HomeUiState(
     val hasAnyEntries: Boolean = false,
     val window: TrendWindow = TrendWindow.FOURTEEN_DAYS,
     val consistencyTrend: List<ConsistencyPoint> = emptyList(),
+    val energyTrend: List<EnergyPoint> = emptyList(),
     /**
      * Assumed times of dog-walker-reported movements within the window -- see
      * [ASSUMED_WALK_DURATION]. Plotted on the consistency chart's time axis as
@@ -144,10 +149,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val windowStart = today.minusDays((window.days - 1).toLong())
         val movementsInWindow = movements.filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
         val walkEntriesInWindow = walkEntries.filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
+        val energyEntriesInWindow = energyEntries.filter { !it.timestamp.toLocalDate().isBefore(windowStart) }
 
         // Real calendar-day filtering (was previously "last N *movements*", which made
         // the 7d/14d/etc. window filter by point count rather than by actual date range).
         val trend = movementsInWindow.sortedBy { it.timestamp }.map { ConsistencyPoint(it.timestamp, it.consistency) }
+        val energyTrend = energyEntriesInWindow.sortedBy { it.timestamp }.map { EnergyPoint(it.timestamp, it.level) }
 
         // Dog-walker-reported counts have no per-movement timestamp; assume they're spread
         // evenly across ASSUMED_WALK_DURATION starting at the entry's logged time, so the
@@ -201,6 +208,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             hasAnyEntries = allTimestamps.isNotEmpty(),
             window = window,
             consistencyTrend = trend,
+            energyTrend = energyTrend,
             walkTicksInWindow = walkTicks,
             dailyFrequency = dailyCounts(overallCountsByDay),
             dailyWalk = dailyCounts(walkCountsByDay),
