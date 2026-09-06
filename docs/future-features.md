@@ -4,6 +4,34 @@ Ideas beyond the MVP described in [development-plan.md](development-plan.md). No
 here is scheduled — add to this list freely as things come up; prune or promote items
 into active development as needed.
 
+## Implementation & testing status
+
+All 12 specs below were reviewed and 10 of them (excluding OCR and multi-dog) were
+built in one batch, then click-tested on-device over several follow-up sessions. This
+table is that status as of the most recent session — see each spec's own section
+below for the full design, and `docs/app-functionality.md` for the always-current
+feature reference.
+
+| # | Feature | Implemented | Tested | Notes |
+|---|---|---|---|---|
+| 1 | Bowel movement amount (1–3 scale) | ✅ Yes | ✅ Yes | Amount chips (Some drips / Medium amount / A lot of poo); saved, edited, and displayed in History and the dashboard during device testing. |
+| 2 | Tap-to-inspect + adjustable dashboard window | ✅ Yes | ✅ Yes | The 1d window option, the real calendar-day filtering fix, the true time-scaled x-axis, per-day date labels, dog-walker tick marks, and tap-to-inspect (showing "Sept 3, 2:00 pm — Normal") were all verified on-device this session, including the new Energy chart sharing the same engine. |
+| 3 | Bowel movement location + night-time (+ Garden) | ✅ Yes | ✅ Yes | Night / Walk / Inside home / Garden chips, `isNightTime`, and the matching dashboard tiles/charts were all round-tripped on-device (save → dashboard updates → shows correctly in History → edit screen confirms it → delete → dashboard reverts). |
+| 4 | Energy level logging | ✅ Yes | ✅ Yes | Full round-trip tested on-device this session: saved a "Low energy" entry, confirmed it appeared correctly on the new Energy trend chart and in the Today card's count, deleted it via History, confirmed both reverted. |
+| 5 | Walker-logged walk summary | ✅ Yes | ✅ Yes | Full round-trip tested: saved a 3-count walk entry, confirmed the dashboard total updated correctly (this was also the exact bug fixed earlier in this session — the dashboard was silently ignoring these), deleted it, confirmed the total reverted. |
+| 6 | Wear OS companion app | ✅ Yes | 🧪 Partial — blocked | Tested against a real Samsung Galaxy Watch5. The watch app installs and renders correctly, finds the phone, and reports every message send as successful. But the phone's Google Play Services consistently refuses to deliver it to CrApp (`WearableService: Failed to deliver message`), even after whitelisting battery optimization, cycling Bluetooth, restarting Play Services, and a full phone reboot. Signing certs and manifest/protocol were verified identical/correct. This looks like a platform-level incompatibility (this phone + Samsung watch + generic third-party `MessageClient`), not a CrApp bug — see spec 6's "On-device finding" note for the full investigation. |
+| 7 | Reminders / notifications | ✅ Yes | 🧪 Partial | The enable toggle, the real Android `POST_NOTIFICATIONS` permission prompt, the threshold chips, and the underlying WorkManager periodic job registration were all verified on-device (`dumpsys jobscheduler` shows it scheduled and already ran once). The real "no movement in 24h+" notification firing wasn't observed live, since that needs a real elapsed day with no logging. |
+| 8 | Photo attachment | ✅ Yes | 🧪 Partial | The MediaStore save/remove/thumbnail flow is implemented; camera launch and cancel-cleanup were verified, but an actual successful photo capture couldn't be automated via `adb` (this phone's camera app doesn't respond to synthetic shutter taps) — a real photo capture still needs your manual test. |
+| 9 | Structured ingredient data | ✅ Yes | ✅ Yes (backend only) | The `Ingredient`/`FoodIngredient` tables, the parser, and the synonym-based canonicalization were verified correct against the real 4 seeded foods via direct on-device database inspection. There's no UI to click-test, by design — it's backend plumbing feeding a future insights feature, not a user-facing screen yet. |
+| 10 | Structured dose/amount fields | ✅ Yes | ✅ Yes | Food side fully round-tripped this session (value 1, unit "tin (400g)", confirmed via the edit screen, then deleted). Medication side: the dose value field and mg/ml/mcg unit chips were confirmed present and rendering correctly, but no dedicated save round-trip was run for medication dose specifically. |
+| 11 | Photo-based ingredient capture (OCR) | ❌ No | ❌ No | Explicitly deferred/excluded from the implementation batch (needs ML Kit, a new dependency). |
+| 12 | Multi-dog support | ❌ No | ❌ No | Explicitly deferred/excluded — the highest-risk, largest-scope item in this list; not started. |
+
+The top-of-backlog "Good DevEx and snappy UI design" item isn't a discrete feature to
+implement/test — it's an ongoing engineering principle this project has generally
+followed (fast Gradle iteration, tap-first logging screens with no dead time), not
+tracked in the table above.
+
 ## Backlog
 
 - [ ] **Good DevEx and snappy UI design** — keep the app fast and pleasant to build on
@@ -151,6 +179,14 @@ just a rollup of the first, so one schema change covers both.
   for two different situations (the user personally walking and logging each
   movement, vs. the dog walker reporting only a count) — not double-entered for the
   same walk. The app doesn't enforce this; see spec 5's UI warning.
+- **Implemented update:** shipped as `enum class Location(val displayName: String) {
+  HOME("Inside home"), GARDEN("Garden"), WALK("Walk"), OTHER("Other") }` — a `GARDEN`
+  value was added (outdoor-but-not-a-walk is common enough to want its own bucket
+  rather than falling into `OTHER`'s free text), and `HOME`'s UI label changed to
+  "Inside home" so it reads unambiguously next to "Garden". No migration needed
+  (`Location` is still stored as its constant name via `Converters.kt`, and `GARDEN`
+  is just a new valid string). The dashboard also gained a per-day breakdown chart
+  and window stat tile for each of Walk/Night/Inside home/Garden.
 
 ### 4. Energy level logging
 
@@ -201,7 +237,14 @@ for both rather than deriving the pattern twice.
   entities).
 - **Open questions:** is energy logged once/day, or multiple times? If once/day, a
   simpler `UNIQUE(date)` constraint might be more correct than a plain log table —
-  needs a decision before implementing.
+  needs a decision before implementing. **Resolved in practice:** shipped as a plain
+  log table (multiple entries/day allowed), matching real usage observed on-device.
+- **Implemented update:** the dashboard energy trend line was added as
+  `EnergyTrendChart`, sharing its rendering engine (`ScoreTrendChart`) with the
+  consistency chart rather than being a separate implementation — same real
+  time-scaled x-axis, one date label per day, tap-to-inspect. The y-axis plots
+  `EnergyLevel.ordinal + 1` (1-5) but the tap caption shows the level's
+  `displayName` instead of the bare number.
 
 ### 5. Walker-logged walk summary
 
@@ -275,6 +318,34 @@ bowel movements today, and a + to add one. Food and the rest stay phone-only."*
   from the existing phone-only test setup), and the `connectedAndroidTest` caveat in
   memory (backs up real data first) would extend to whatever device pairing is used
   for watch testing too.
+- **On-device finding: message delivery blocked at the platform level, not a CrApp
+  bug.** Tested against a real Samsung Galaxy Watch5 already daily-paired to the
+  test phone (a OnePlus 12 running OxygenOS). The watch app installs, renders, and
+  correctly finds the phone as a connected node; `MessageClient.sendMessage`
+  reports success every time. But the phone's Google Play Services consistently
+  logs `WearableService: Failed to deliver message ... action=/crapp/log_movement`
+  and `PhoneWearableListenerService` never receives it — confirmed via temporary
+  logging added to both sides for this investigation (since removed). Ruled out,
+  each independently verified:
+  - App signing: both APKs share an identical debug certificate (verified with
+    `apksigner verify --print-certs`) — not a signature mismatch.
+  - Manifest/protocol: the intent-filter matches Google's documented
+    `WearableListenerService` pattern exactly, and both modules' `WearProtocol.kt`
+    path constants are identical.
+  - Not a stale-cache/timing issue: retried after adding `com.crapp` to the
+    battery-optimization whitelist, after toggling the phone's Bluetooth off/on,
+    after force-restarting Google Play Services (confirmed via a new PID), and
+    after a full phone reboot (confirmed via another new PID) — identical failure
+    every time, with no additional detail ever logged beyond that one line.
+  - The Bluetooth link itself is fine throughout: `dumpsys bluetooth_manager` shows
+    `mCurrentState: Connected` with active traffic to
+    `com.google.android.gms.persistent`, and the watch's own first-party sync
+    (steps, battery, notifications) keeps working the whole time.
+  - This points at a Play Services incompatibility specific to this
+    non-Samsung/non-Pixel phone plus a Samsung "Wear OS powered by Samsung" watch
+    for **generic third-party** `MessageClient` delivery — not something fixable
+    from the app side. Worth retrying on a Samsung or Pixel phone, or after a
+    Play Services update, before assuming the feature itself is broken.
 
 ### 7. Reminders / notifications
 

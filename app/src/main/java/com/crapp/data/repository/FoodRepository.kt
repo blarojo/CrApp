@@ -6,6 +6,12 @@ import com.crapp.data.model.Food
 import com.crapp.data.model.FoodEntry
 import kotlinx.coroutines.flow.Flow
 
+/** Outcome of [FoodRepository.deleteFood]. */
+sealed class DeleteFoodResult {
+    data object Success : DeleteFoodResult()
+    data class InUse(val entryCount: Int) : DeleteFoodResult()
+}
+
 class FoodRepository(
     private val foodDao: FoodDao,
     private val foodEntryDao: FoodEntryDao
@@ -40,6 +46,19 @@ class FoodRepository(
 
     /** Updates a food's ingredients (or name/brand), e.g. from the Food Catalog screen. */
     suspend fun updateFood(food: Food) = foodDao.update(food)
+
+    /**
+     * Deletes [food] from the catalog -- backs the Food Catalog's "delete old ones"
+     * flow. Refuses (returning [DeleteFoodResult.InUse] instead of deleting) if any
+     * `food_entry` still references it, rather than letting the FK `RESTRICT`
+     * constraint throw; the caller can then tell the user why.
+     */
+    suspend fun deleteFood(food: Food): DeleteFoodResult {
+        val referencingCount = foodDao.countFoodEntriesReferencing(food.id)
+        if (referencingCount > 0) return DeleteFoodResult.InUse(referencingCount)
+        foodDao.delete(food)
+        return DeleteFoodResult.Success
+    }
 
     suspend fun logFoodEntry(entry: FoodEntry): Long = foodEntryDao.insert(entry)
 

@@ -17,7 +17,12 @@ import java.time.Instant
  */
 class FoodRepositoryTest {
 
-    private fun newRepo() = FoodRepository(FakeFoodDao(), FakeFoodEntryDao())
+    private fun newRepo(): FoodRepository {
+        val foodDao = FakeFoodDao()
+        val foodEntryDao = FakeFoodEntryDao()
+        foodDao.foodEntryDao = foodEntryDao // lets countFoodEntriesReferencing see real entry counts
+        return FoodRepository(foodDao, foodEntryDao)
+    }
 
     @Test
     fun getOrCreateFood_firstCall_insertsAndReturnsNewId() = runBlocking {
@@ -81,6 +86,29 @@ class FoodRepositoryTest {
         repo.deleteFoodEntry(repo.getFoodEntryById(entryId)!!)
 
         assertNull(repo.getFoodEntryById(entryId))
+    }
+
+    @Test
+    fun deleteFood_notReferencedByAnyEntry_deletesIt() = runBlocking {
+        val repo = newRepo()
+        val id = repo.getOrCreateFood("Boiled Chicken")
+
+        val result = repo.deleteFood(repo.getFoodById(id)!!)
+
+        assertEquals(DeleteFoodResult.Success, result)
+        assertNull(repo.getFoodById(id))
+    }
+
+    @Test
+    fun deleteFood_stillReferencedByAFoodEntry_refusesAndLeavesItIntact() = runBlocking {
+        val repo = newRepo()
+        val id = repo.getOrCreateFood("Boiled Chicken")
+        repo.logFoodEntry(FoodEntry(timestamp = Instant.now(), foodId = id, mealType = MealType.MEAL))
+
+        val result = repo.deleteFood(repo.getFoodById(id)!!)
+
+        assertEquals(DeleteFoodResult.InUse(1), result)
+        assertEquals("Boiled Chicken", repo.getFoodById(id)?.name)
     }
 
     @Test

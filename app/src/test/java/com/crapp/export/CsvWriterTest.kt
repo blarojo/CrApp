@@ -44,9 +44,12 @@ class CsvWriterTest {
         val csv = CsvWriter.bowelMovementsCsv(movements, zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("id,timestamp,consistency,color,has_blood,has_mucus,notes", lines[0])
         assertEquals(
-            "1,2026-09-01 08:30:00,6,brown,true,false,\"watery, right after breakfast\"",
+            "id,timestamp,consistency,color,has_blood,has_mucus,notes,amount,location,location_other,is_night_time,photo_uri",
+            lines[0]
+        )
+        assertEquals(
+            "1,2026-09-01 08:30:00,6,brown,true,false,\"watery, right after breakfast\",,,,false,",
             lines[1]
         )
     }
@@ -55,7 +58,10 @@ class CsvWriterTest {
     fun bowelMovementsCsv_emptyList_producesHeaderOnly() {
         val csv = CsvWriter.bowelMovementsCsv(emptyList(), zone)
 
-        assertEquals("id,timestamp,consistency,color,has_blood,has_mucus,notes\r\n", csv)
+        assertEquals(
+            "id,timestamp,consistency,color,has_blood,has_mucus,notes,amount,location,location_other,is_night_time,photo_uri\r\n",
+            csv
+        )
     }
 
     @Test
@@ -68,9 +74,9 @@ class CsvWriterTest {
         val csv = CsvWriter.foodEntriesCsv(entries, mapOf(10L to food), zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("id,timestamp,food,brand,amount,meal_type,ingredients", lines[0])
+        assertEquals("id,timestamp,food,brand,amount,meal_type,ingredients,amount_value,amount_unit", lines[0])
         assertEquals(
-            "1,2026-09-01 12:00:00,Hill's I/D,Hill's,1/2 cup,MEAL,\"Chicken, rice, oat fiber\"",
+            "1,2026-09-01 12:00:00,Hill's I/D,Hill's,1/2 cup,MEAL,\"Chicken, rice, oat fiber\",,",
             lines[1]
         )
     }
@@ -84,7 +90,7 @@ class CsvWriterTest {
         val csv = CsvWriter.foodEntriesCsv(entries, emptyMap(), zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("1,2026-09-01 12:00:00,,,,TREAT,", lines[1])
+        assertEquals("1,2026-09-01 12:00:00,,,,TREAT,,,", lines[1])
     }
 
     @Test
@@ -96,8 +102,8 @@ class CsvWriterTest {
         val csv = CsvWriter.medicationEntriesCsv(entries, zone)
 
         val lines = csv.split("\r\n")
-        assertEquals("id,timestamp,name,dose,notes", lines[0])
-        assertEquals("1,2026-09-01 09:00:00,Metronidazole,250mg,", lines[1])
+        assertEquals("id,timestamp,name,dose,notes,dose_value,dose_unit", lines[0])
+        assertEquals("1,2026-09-01 09:00:00,Metronidazole,250mg,,,", lines[1])
     }
 
     @Test
@@ -118,7 +124,7 @@ class CsvWriterTest {
         // Embedded quotes are doubled and the whole field is wrapped in quotes;
         // the embedded \n stays inside the quoted field rather than starting a new row.
         assertEquals(
-            "1,2026-09-01 09:00:00,\"Med, \"\"special\"\"\",,\"line one\nline two\"",
+            "1,2026-09-01 09:00:00,\"Med, \"\"special\"\"\",,\"line one\nline two\",,",
             lines[1]
         )
     }

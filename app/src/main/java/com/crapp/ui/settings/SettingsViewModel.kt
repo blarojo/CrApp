@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
+import com.crapp.data.prefs.NotificationSettings
 import com.crapp.data.prefs.ThemeMode
+import com.crapp.reminders.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,8 @@ enum class BackupStatus { IDLE, WORKING }
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val status: BackupStatus = BackupStatus.IDLE,
-    val message: String? = null
+    val message: String? = null,
+    val notificationSettings: NotificationSettings = NotificationSettings()
 )
 
 /**
@@ -37,18 +40,47 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val app = application as CrAppApplication
     private val themePreferences = app.themePreferences
     private val backupRepository = app.backupRepository
+    private val notificationPreferences = app.notificationPreferences
 
-    private val _uiState = MutableStateFlow(SettingsUiState(themeMode = themePreferences.themeMode.value))
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(
+            themeMode = themePreferences.themeMode.value,
+            notificationSettings = notificationPreferences.settings.value
+        )
+    )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             themePreferences.themeMode.collect { mode -> _uiState.update { it.copy(themeMode = mode) } }
         }
+        viewModelScope.launch {
+            notificationPreferences.settings.collect { settings ->
+                _uiState.update { it.copy(notificationSettings = settings) }
+            }
+        }
     }
 
     fun setThemeMode(mode: ThemeMode) {
         themePreferences.setThemeMode(mode)
+    }
+
+    /**
+     * [permissionGranted] is only meaningful when turning reminders *on* on Android
+     * 13+ -- the caller (SettingsScreen) requests `POST_NOTIFICATIONS` first and
+     * passes the result here, since a Worker can't request runtime permissions
+     * itself. Turning reminders off never needs it.
+     */
+    fun setRemindersEnabled(enabled: Boolean, permissionGranted: Boolean = true) {
+        if (enabled && !permissionGranted) return
+        val updated = notificationPreferences.settings.value.copy(enabled = enabled)
+        notificationPreferences.setSettings(updated)
+        if (enabled) ReminderScheduler.schedule(getApplication()) else ReminderScheduler.cancel(getApplication())
+    }
+
+    fun setReminderThresholdHours(hours: Int) {
+        val updated = notificationPreferences.settings.value.copy(thresholdHours = hours.coerceIn(1, 168))
+        notificationPreferences.setSettings(updated)
     }
 
     /** Writes a fresh backup to [uri] (from a `CreateDocument` picker result). */

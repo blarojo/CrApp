@@ -1,11 +1,15 @@
 package com.crapp.ui.bowel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.crapp.CrAppApplication
+import com.crapp.data.model.Amount
 import com.crapp.data.model.BowelMovement
+import com.crapp.data.model.Location
+import com.crapp.export.BowelMovementPhotoStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +23,16 @@ data class BowelMovementLogUiState(
     val hasBlood: Boolean = false,
     val hasMucus: Boolean = false,
     val notes: String = "",
+    val amount: Amount? = null,
+    val location: Location? = null,
+    val locationOther: String = "",
+    /**
+     * Manually toggled by the "Night" quick-select chip -- pre-filled from the configured
+     * night window at screen-open time (or from the saved value when editing), but the user
+     * has the final say rather than it being silently inferred at save time.
+     */
+    val isNightTime: Boolean = false,
+    val photoUri: String? = null,
     val isEditing: Boolean = false,
     val saved: Boolean = false
 )
@@ -27,23 +41,39 @@ class BowelMovementLogViewModel(
     application: Application,
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
-    private val repository = (application as CrAppApplication).bowelMovementRepository
+    private val app = application as CrAppApplication
+    private val repository = app.bowelMovementRepository
+    private val nightWindowPreferences = app.nightWindowPreferences
+    private val photoStore = BowelMovementPhotoStore(application)
     private val editingId: Long = savedStateHandle.get<Long>("id") ?: -1L
 
-    private val _uiState = MutableStateFlow(BowelMovementLogUiState(isEditing = editingId != -1L))
+    private var previousPhotoUri: String? = null
+
+    private val _uiState = MutableStateFlow(
+        BowelMovementLogUiState(
+            isEditing = editingId != -1L,
+            isNightTime = nightWindowPreferences.nightWindow.value.isNightTime(Instant.now())
+        )
+    )
     val uiState: StateFlow<BowelMovementLogUiState> = _uiState.asStateFlow()
 
     init {
         if (editingId != -1L) {
             viewModelScope.launch {
                 repository.getById(editingId)?.let { movement ->
+                    previousPhotoUri = movement.photoUri
                     _uiState.update {
                         it.copy(
                             timestamp = movement.timestamp,
                             consistency = movement.consistency,
                             hasBlood = movement.hasBlood,
                             hasMucus = movement.hasMucus,
-                            notes = movement.notes ?: ""
+                            notes = movement.notes ?: "",
+                            amount = movement.amount,
+                            location = movement.location,
+                            locationOther = movement.locationOther ?: "",
+                            isNightTime = movement.isNightTime,
+                            photoUri = movement.photoUri
                         )
                     }
                 }
@@ -71,6 +101,38 @@ class BowelMovementLogViewModel(
         _uiState.update { it.copy(notes = notes) }
     }
 
+    fun onAmountChange(amount: Amount) {
+        _uiState.update { it.copy(amount = if (it.amount == amount) null else amount) }
+    }
+
+    fun onLocationChange(location: Location) {
+        _uiState.update {
+            val newLocation = if (it.location == location) null else location
+            it.copy(location = newLocation, locationOther = if (newLocation == Location.OTHER) it.locationOther else "")
+        }
+    }
+
+    fun onLocationOtherChange(text: String) {
+        _uiState.update { it.copy(locationOther = text) }
+    }
+
+    fun onNightTimeChange(isNightTime: Boolean) {
+        _uiState.update { it.copy(isNightTime = isNightTime) }
+    }
+
+    /** Creates a fresh `MediaStore` target for the camera to write into; returns null if the store rejected it. */
+    fun createPhotoCaptureTarget(): Uri? = photoStore.createNewPhotoUri()
+
+    /** Called once the camera activity result confirms [uri] was written to. */
+    fun onPhotoCaptured(uri: Uri) {
+        _uiState.update { it.copy(photoUri = uri.toString()) }
+    }
+
+    fun onRemovePhoto() {
+        _uiState.value.photoUri?.let(photoStore::delete)
+        _uiState.update { it.copy(photoUri = null) }
+    }
+
     fun save() {
         val state = _uiState.value
         viewModelScope.launch {
@@ -80,9 +142,18 @@ class BowelMovementLogViewModel(
                 consistency = state.consistency,
                 hasBlood = state.hasBlood,
                 hasMucus = state.hasMucus,
-                notes = state.notes.ifBlank { null }
+                notes = state.notes.ifBlank { null },
+                amount = state.amount,
+                location = state.location,
+                locationOther = state.locationOther.ifBlank { null }.takeIf { state.location == Location.OTHER },
+                isNightTime = state.isNightTime,
+                photoUri = state.photoUri
             )
             if (editingId != -1L) repository.update(movement) else repository.add(movement)
+            // A photo replaced mid-edit leaves its old MediaStore row orphaned otherwise.
+            if (previousPhotoUri != null && previousPhotoUri != state.photoUri) {
+                photoStore.delete(previousPhotoUri!!)
+            }
             _uiState.update { it.copy(saved = true) }
         }
     }
@@ -90,7 +161,10 @@ class BowelMovementLogViewModel(
     fun delete() {
         if (editingId == -1L) return
         viewModelScope.launch {
-            repository.getById(editingId)?.let { repository.delete(it) }
+            repository.getById(editingId)?.let { movement ->
+                movement.photoUri?.let(photoStore::delete)
+                repository.delete(movement)
+            }
             _uiState.update { it.copy(saved = true) }
         }
     }

@@ -1,15 +1,17 @@
 package com.crapp.export
 
 import com.crapp.data.model.BowelMovement
+import com.crapp.data.model.EnergyEntry
 import com.crapp.data.model.Food
 import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.MedicationEntry
+import com.crapp.data.model.WalkEntry
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
- * Hand-rolled CSV serialization for the three loggable entity types (see
+ * Hand-rolled CSV serialization for the loggable entity types (see
  * docs/development-plan.md §8) -- the schema is small and stable enough that a
  * library would be overkill. Produces one CSV per table rather than a single mixed
  * file, since the row shapes don't align into sensible shared columns.
@@ -26,7 +28,10 @@ object CsvWriter {
         movements: List<BowelMovement>,
         zone: ZoneId = ZoneId.systemDefault()
     ): String {
-        val header = listOf("id", "timestamp", "consistency", "color", "has_blood", "has_mucus", "notes")
+        val header = listOf(
+            "id", "timestamp", "consistency", "color", "has_blood", "has_mucus", "notes",
+            "amount", "location", "location_other", "is_night_time", "photo_uri"
+        )
         val rows = movements.map { m ->
             listOf(
                 m.id.toString(),
@@ -35,7 +40,12 @@ object CsvWriter {
                 m.color.orEmpty(),
                 m.hasBlood.toString(),
                 m.hasMucus.toString(),
-                m.notes.orEmpty()
+                m.notes.orEmpty(),
+                m.amount?.displayName.orEmpty(),
+                m.location?.name.orEmpty(),
+                m.locationOther.orEmpty(),
+                m.isNightTime.toString(),
+                m.photoUri.orEmpty()
             )
         }
         return toCsv(header, rows)
@@ -52,7 +62,10 @@ object CsvWriter {
         foodsById: Map<Long, Food>,
         zone: ZoneId = ZoneId.systemDefault()
     ): String {
-        val header = listOf("id", "timestamp", "food", "brand", "amount", "meal_type", "ingredients")
+        val header = listOf(
+            "id", "timestamp", "food", "brand", "amount", "meal_type", "ingredients",
+            "amount_value", "amount_unit"
+        )
         val rows = entries.map { e ->
             val food = foodsById[e.foodId]
             listOf(
@@ -62,7 +75,9 @@ object CsvWriter {
                 food?.brand.orEmpty(),
                 e.amount.orEmpty(),
                 e.mealType.name,
-                food?.ingredients.orEmpty()
+                food?.ingredients.orEmpty(),
+                e.amountValue?.toString().orEmpty(),
+                e.amountUnit.orEmpty()
             )
         }
         return toCsv(header, rows)
@@ -72,9 +87,34 @@ object CsvWriter {
         entries: List<MedicationEntry>,
         zone: ZoneId = ZoneId.systemDefault()
     ): String {
-        val header = listOf("id", "timestamp", "name", "dose", "notes")
+        val header = listOf("id", "timestamp", "name", "dose", "notes", "dose_value", "dose_unit")
         val rows = entries.map { e ->
-            listOf(e.id.toString(), formatTimestamp(e.timestamp, zone), e.name, e.dose.orEmpty(), e.notes.orEmpty())
+            listOf(
+                e.id.toString(), formatTimestamp(e.timestamp, zone), e.name, e.dose.orEmpty(), e.notes.orEmpty(),
+                e.doseValue?.toString().orEmpty(), e.doseUnit.orEmpty()
+            )
+        }
+        return toCsv(header, rows)
+    }
+
+    fun energyEntriesCsv(
+        entries: List<EnergyEntry>,
+        zone: ZoneId = ZoneId.systemDefault()
+    ): String {
+        val header = listOf("id", "timestamp", "level", "notes")
+        val rows = entries.map { e ->
+            listOf(e.id.toString(), formatTimestamp(e.timestamp, zone), e.level.displayName, e.notes.orEmpty())
+        }
+        return toCsv(header, rows)
+    }
+
+    fun walkEntriesCsv(
+        entries: List<WalkEntry>,
+        zone: ZoneId = ZoneId.systemDefault()
+    ): String {
+        val header = listOf("id", "timestamp", "bowel_movement_count", "notes")
+        val rows = entries.map { e ->
+            listOf(e.id.toString(), formatTimestamp(e.timestamp, zone), e.bowelMovementCount.toString(), e.notes.orEmpty())
         }
         return toCsv(header, rows)
     }

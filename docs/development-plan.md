@@ -140,7 +140,8 @@ CrApp/
 │   └── build.gradle.kts
 ├── docs/
 │   ├── development-plan.md
-│   └── future-features.md
+│   ├── future-features.md
+│   └── app-functionality.md
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── gradle/

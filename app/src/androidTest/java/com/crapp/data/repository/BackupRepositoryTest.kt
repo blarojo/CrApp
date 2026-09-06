@@ -32,6 +32,8 @@ class BackupRepositoryTest {
     private lateinit var bowelMovementRepository: BowelMovementRepository
     private lateinit var foodRepository: FoodRepository
     private lateinit var medicationRepository: MedicationRepository
+    private lateinit var energyRepository: EnergyRepository
+    private lateinit var walkRepository: WalkRepository
 
     @Before
     fun setUp() {
@@ -41,8 +43,13 @@ class BackupRepositoryTest {
             .build()
         bowelMovementRepository = BowelMovementRepository(db.bowelMovementDao())
         foodRepository = FoodRepository(db.foodDao(), db.foodEntryDao())
-        medicationRepository = MedicationRepository(db.medicationEntryDao())
-        backupRepository = BackupRepository(db, bowelMovementRepository, foodRepository, medicationRepository)
+        medicationRepository = MedicationRepository(db.medicationEntryDao(), db.medicationDao())
+        energyRepository = EnergyRepository(db.energyEntryDao())
+        walkRepository = WalkRepository(db.walkEntryDao())
+        backupRepository = BackupRepository(
+            db, bowelMovementRepository, foodRepository, medicationRepository,
+            energyRepository, walkRepository
+        )
     }
 
     @After
@@ -63,27 +70,45 @@ class BackupRepositoryTest {
     }
 
     @Test
-    fun exportThenRestore_roundTripsEverythingIncludingIngredientsAndForeignKeys() = runBlocking {
+    fun exportThenRestore_roundTripsBowelMedEnergyWalk_butLeavesFoodCatalogAndFoodEntriesAlone() = runBlocking {
         seedSampleData()
+        energyRepository.add(
+            com.crapp.data.model.EnergyEntry(
+                timestamp = Instant.parse("2026-09-01T07:00:00Z"),
+                level = com.crapp.data.model.EnergyLevel.A_BIT_PLAYFUL
+            )
+        )
+        walkRepository.add(
+            com.crapp.data.model.WalkEntry(timestamp = Instant.parse("2026-09-01T16:00:00Z"), bowelMovementCount = 2)
+        )
 
         val json = backupRepository.exportToJson()
-        backupRepository.clearAllData()
+        val foodsBeforeRestore = foodRepository.allFoods.first()
+        val foodEntriesBeforeRestore = foodRepository.allFoodEntries.first()
+
+        // Simulates the real scenario this was built for: the catalog has since
+        // been cleaned up / added to since the backup was taken (e.g. a bad old
+        // food deleted, a good new one added) -- restoring an older backup must not
+        // clobber that.
+        val newFoodId = foodRepository.getOrCreateFood("A brand new food added after the backup")
+        bowelMovementRepository.add(BowelMovement(timestamp = Instant.now(), consistency = 2))
+
         backupRepository.restoreFromJson(json)
 
+        // Bowel movements, medications, energy, and walks are replaced with the backup's contents.
         assertEquals(1, bowelMovementRepository.allMovements.first().size)
         assertEquals(6, bowelMovementRepository.allMovements.first().first().consistency)
-
-        val foods = foodRepository.allFoods.first()
-        assertEquals(1, foods.size)
-        assertEquals("Chicken, water", foods.first().ingredients)
-
-        val foodEntries = foodRepository.allFoodEntries.first()
-        assertEquals(1, foodEntries.size)
-        // The restored food_entry's foodId must point at the restored food's id --
-        // this is the part a naive delete-all/insert-all without matching ids would break.
-        assertEquals(foods.first().id, foodEntries.first().foodId)
-
         assertEquals(1, medicationRepository.allEntries.first().size)
+        assertEquals(1, energyRepository.allEntries.first().size)
+        assertEquals(1, walkRepository.allEntries.first().size)
+
+        // The food catalog (including the food added after the backup) and its food
+        // entries are completely untouched by the restore -- not wiped, not replaced.
+        val foodsAfterRestore = foodRepository.allFoods.first()
+        assertEquals(foodsBeforeRestore.size + 1, foodsAfterRestore.size)
+        assertTrue(foodsAfterRestore.any { it.id == newFoodId })
+        assertEquals("Chicken, water", foodsAfterRestore.first { it.name == "Z/D" }.ingredients)
+        assertEquals(foodEntriesBeforeRestore, foodRepository.allFoodEntries.first())
     }
 
     @Test

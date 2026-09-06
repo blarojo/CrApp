@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -27,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crapp.data.model.MealType
@@ -62,6 +66,7 @@ fun FoodLogScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -128,6 +133,24 @@ fun FoodLogScreen(
                 label = { Text("Amount (optional)") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Text(text = "Structured amount (optional)", style = MaterialTheme.typography.titleMedium)
+            OutlinedTextField(
+                value = uiState.amountValueText,
+                onValueChange = viewModel::onAmountValueTextChange,
+                label = { Text("Value") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FOOD_AMOUNT_UNITS.forEach { unit ->
+                    FilterChip(
+                        selected = uiState.amountUnit == unit,
+                        onClick = { viewModel.onAmountUnitChange(unit) },
+                        label = { Text(unit) }
+                    )
+                }
+            }
 
             Button(
                 onClick = viewModel::save,

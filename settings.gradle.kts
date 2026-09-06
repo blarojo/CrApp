@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CrApp"
 include(":app")
+include(":wear")

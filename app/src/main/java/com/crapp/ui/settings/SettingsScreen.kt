@@ -1,5 +1,7 @@
 package com.crapp.ui.settings
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -19,10 +21,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -34,7 +38,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crapp.AppConfig
 import com.crapp.data.prefs.ThemeMode
@@ -46,6 +52,7 @@ import java.time.format.DateTimeFormatter
 fun SettingsScreen(
     onBack: () -> Unit,
     onManageFoodCatalog: () -> Unit,
+    onManageMedicationCatalog: () -> Unit,
     onViewInsights: () -> Unit,
     viewModel: SettingsViewModel = viewModel()
 ) {
@@ -60,6 +67,11 @@ fun SettingsScreen(
     val restoreLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(viewModel::restoreFrom) }
+
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> viewModel.setRemindersEnabled(enabled = true, permissionGranted = granted) }
 
     Scaffold(
         topBar = {
@@ -99,6 +111,19 @@ fun SettingsScreen(
                 }
             }
 
+            SettingsSection(title = "Medication Catalog") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Add, rename, or remove the medications offered in the medication " +
+                            "log's dropdown.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedButton(onClick = onManageMedicationCatalog, modifier = Modifier.fillMaxWidth()) {
+                        Text("Manage Medications")
+                    }
+                }
+            }
+
             SettingsSection(title = "Insights") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -109,6 +134,48 @@ fun SettingsScreen(
                     )
                     OutlinedButton(onClick = onViewInsights, modifier = Modifier.fillMaxWidth()) {
                         Text("View Insights")
+                    }
+                }
+            }
+
+            SettingsSection(title = "Reminders") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Get a notification if no bowel movement has been logged in a while.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Enabled", style = MaterialTheme.typography.bodyLarge)
+                        Switch(
+                            checked = uiState.notificationSettings.enabled,
+                            onCheckedChange = { enabled ->
+                                val needsRuntimePermission = enabled &&
+                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                                    android.content.pm.PackageManager.PERMISSION_GRANTED
+                                if (needsRuntimePermission) {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.setRemindersEnabled(enabled)
+                                }
+                            }
+                        )
+                    }
+                    if (uiState.notificationSettings.enabled) {
+                        Text("Remind me after", style = MaterialTheme.typography.bodyMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(12, 24, 48).forEach { hours ->
+                                FilterChip(
+                                    selected = uiState.notificationSettings.thresholdHours == hours,
+                                    onClick = { viewModel.setReminderThresholdHours(hours) },
+                                    label = { Text("${hours}h") }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -175,8 +242,10 @@ fun SettingsScreen(
             title = { Text("Restore from backup?") },
             text = {
                 Text(
-                    "This replaces everything currently logged on this phone with the contents " +
-                        "of the backup file you choose next. This can't be undone."
+                    "This replaces all bowel movements, medications, energy, and walk entries " +
+                        "currently on this phone with the contents of the backup file you choose " +
+                        "next. Your Food Catalog (and food log entries) is left as-is -- restore " +
+                        "doesn't touch it. This can't be undone."
                 )
             },
             confirmButton = {

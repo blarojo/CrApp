@@ -70,7 +70,7 @@ fun ExportScreen(
         ) {
             Text(
                 "Export all logged data to CSV — one file each for bowel movements, food, " +
-                    "and medications — ready to share with your vet or dig into elsewhere.",
+                    "medications, energy, and walks — ready to share with your vet or dig into elsewhere.",
                 style = MaterialTheme.typography.bodyMedium
             )
 
