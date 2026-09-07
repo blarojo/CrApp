@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crapp.data.model.Food
+import com.crapp.ocr.IngredientsTextExtractor
 import com.crapp.ocr.LabelScanStore
 import kotlinx.coroutines.launch
 
@@ -266,11 +267,14 @@ private fun AddFoodDialog(
 /**
  * A "📷 Scan label" button, shared by [IngredientsEditDialog] and [AddFoodDialog]:
  * takes a photo (via the same disposable-`FileProvider`-cache-file pattern as
- * [com.crapp.ocr.LabelScanStore]'s own KDoc explains) and runs on-device text
- * recognition on it, calling [onTextRecognized] with the result -- the caller decides
- * how to fold that into its own ingredients field (both callers here simply replace
- * it, matching docs/backlog.md spec 12: "pre-fills ... for the user to review/edit
- * before saving", never auto-saved unreviewed).
+ * [com.crapp.ocr.LabelScanStore]'s own KDoc explains), runs on-device text
+ * recognition on it, then runs [IngredientsTextExtractor] to isolate just the
+ * ingredients/composition section from the rest of the label (nutritional info,
+ * weight, address, etc.) before calling [onTextRecognized] -- the caller decides how
+ * to fold that into its own ingredients field (both callers here simply replace it,
+ * matching docs/backlog.md spec 12: "pre-fills ... for the user to review/edit
+ * before saving", never auto-saved unreviewed). Falls back to the full recognized
+ * text, with a heads-up toast, if no ingredients/composition heading is found.
  */
 @Composable
 private fun ScanLabelButton(onTextRecognized: (String) -> Unit) {
@@ -293,14 +297,25 @@ private fun ScanLabelButton(onTextRecognized: (String) -> Unit) {
                 isScanning = false
                 result.fold(
                     onSuccess = { text ->
-                        if (text.isNotBlank()) {
-                            onTextRecognized(text)
-                        } else {
+                        if (text.isBlank()) {
                             Toast.makeText(
                                 context,
                                 "No text found in that photo -- try again with better lighting/focus.",
                                 Toast.LENGTH_LONG
                             ).show()
+                        } else {
+                            val ingredientsOnly = IngredientsTextExtractor.extract(text)
+                            if (ingredientsOnly != null) {
+                                onTextRecognized(ingredientsOnly)
+                            } else {
+                                onTextRecognized(text)
+                                Toast.makeText(
+                                    context,
+                                    "Couldn't spot an \"Ingredients\"/\"Composition\" heading -- " +
+                                        "filled in the full scanned text instead, trim as needed.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     },
                     onFailure = {

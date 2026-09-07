@@ -78,6 +78,20 @@ via Settings).
   on-device; an actual label capture + recognized-text pass couldn't be automated
   the same way the bowel-movement photo capture couldn't (see Testing status) — a
   real scan still needs a manual on-device test.
+  - **Ingredients-section extraction** ✅ — after real-world use showed the raw
+    recognized text (nutritional info, weight, address, etc. all included) needed
+    manual trimming, `IngredientsTextExtractor` now isolates just the
+    ingredients/composition section before pre-filling the field: it looks for a
+    line containing "Ingredients" or "Composition" (the UK/EU pet-food convention
+    this app's own seed labels use) and takes everything up to the next recognized
+    section heading (analytical constituents, nutritional info, additives, feeding
+    guide, best-before, etc.). **No AI/cloud model involved** — plain rule-based
+    text matching on the client, run on whatever ML Kit already recognized. It's an
+    approximation, not a guarantee (an unusual label layout or wording won't match),
+    so it falls back to the full recognized text (with a heads-up toast) rather than
+    silently guessing wrong or losing text. Fully unit-tested (pure text logic, no
+    Android/camera dependency — see `IngredientsTextExtractorTest`), unlike the
+    camera-capture part above.
 - **4 starter foods are pre-seeded** on a brand-new install (Hill's z/d Mini dry,
   Hill's z/d wet, Purina Pro Plan HA Mousse, Purina Pro Plan HA Dry) with their
   real ingredient labels already filled in. ✅
