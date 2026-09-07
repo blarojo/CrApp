@@ -362,6 +362,53 @@ insight cards (correct notable/info styling), the caveat line, and all series
 charts all confirmed rendering correctly with values matching the source JSON
 exactly.
 
+## 14. Home screen widget
+
+docs/backlog.md spec 15. A standard Android home screen widget (`CrAppWidget`,
+built on Jetpack Glance — the Compose-based widget API, not classic `RemoteViews`,
+to stay in the same UI toolkit as the rest of the app) — add it the normal Android
+way: long-press an empty spot on the home screen → **Widgets** → **CrApp**.
+
+- 🧪 **Summary row** — today's bowel-movement count (always shown), plus food and
+  energy counts when non-zero, e.g. "💩 6 · 🍗 1 · ⚡ 1" — the same numbers and the
+  same "only show if non-zero" convention as `HomeScreen`'s own "Today" hero card,
+  computed by the exact same shared logic (`computeWidgetTodayCounts`, built on the
+  same `Instant.isToday()` primitive `HomeViewModel` uses for its own Today count —
+  see `com.crapp.util.Today.kt`) rather than a second implementation that could
+  drift from the app's own numbers. Deliberately excludes medication/walk counts,
+  to keep the widget compact.
+- 🧪 **"Add BM" button** — opens the app directly on the Log Bowel Movement screen,
+  reusing the exact same deep-link mechanism (`MainActivity.EXTRA_OPEN_LOG_BOWEL_MOVEMENT`)
+  a reminder notification tap already uses, not a second path to the same
+  destination.
+- 🧪 **"Add Food" button** — opens the app directly on the Log Food screen, via a new
+  equivalent extra (`MainActivity.EXTRA_OPEN_LOG_FOOD`) following the exact same
+  pattern.
+- **Refresh strategy**, two parts:
+  - Near-instant: a reactive collector in `CrAppApplication.onCreate()` watches the
+    same three repositories' data and calls `CrAppWidget().updateAll()` on any
+    relevant change — the same established pattern this app already uses to keep a
+    paired Wear OS watch's today-count display current, just pointed at the widget
+    instead.
+  - Hourly fallback (`WidgetRefreshWorker`, a `WorkManager` periodic job, same
+    idiom as the Reminders feature's own periodic check): catches the one case the
+    reactive path can't — a local-midnight rollover with no new data logged at all,
+    so "today's" count doesn't keep showing yesterday's numbers on a quiet morning.
+  - `updatePeriodMillis` in the widget's own provider metadata is deliberately `0`
+    (unused) — refresh is driven by the above instead, not the legacy
+    once-every-30-minutes-minimum widget-metadata mechanism.
+- No new data model/migration — reads the same `BowelMovementDao`/`FoodDao`/
+  `EnergyEntryDao` data `HomeViewModel` already reads for its own Today card.
+
+**Status: implemented and fully covered by unit tests for everything that's
+pure logic** (`computeWidgetTodayCounts`, `Instant.isToday()`) — **but not yet
+click-tested live on a real device.** The phone this was built against disconnected
+mid-session before a manual pass could happen; unlike the rest of this app's 🧪
+items, this one has *no* on-device confirmation yet at all (not even a "camera
+launches, doesn't crash"-level smoke test), since Glance's own rendered UI isn't
+something a build/compile pass can confirm — see Testing status below for exactly
+what still needs a real pass.
+
 ## Data model
 
 Tables: `bowel_movement`, `food_entry`, `medication_entry`, `energy_entry`,
@@ -385,6 +432,17 @@ What's still genuinely unverified:
 
 - **Medication structured dose** (§3) — fields render correctly, but no dedicated
   save round-trip has been run for medication dose specifically.
+- **Home screen widget** (§14) — **the least verified item in this list.** Everything
+  that's pure logic (`computeWidgetTodayCounts`, the shared `Instant.isToday()`
+  primitive) is unit-tested, and the whole app compiles/assembles with the widget
+  code included, but none of the following has been observed live yet: adding the
+  widget to a real home screen and confirming its numbers match the app's own Today
+  card; tapping "Add BM"/"Add Food" and confirming each opens directly on the right
+  screen (not Home first); logging a new entry from inside the app and confirming
+  the already-placed widget's count updates without being removed/re-added
+  (verifies the reactive refresh path, not just first render); and leaving the
+  widget untouched across a local-midnight rollover to confirm the hourly fallback
+  job actually resets "today's" count. Needs a real device pass before trusting it.
 - **Usual amount** (§2) — the schema migration (`MIGRATION_4_5`) was exercised for
   real (a genuine `adb install -r` over the real on-device database, confirmed
   clean via a stable process and no crash/SQL exception in logcat); the UI flow

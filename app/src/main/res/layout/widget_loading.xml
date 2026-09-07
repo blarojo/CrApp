@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal placeholder RemoteViews shown for the brief moment before Glance's own
+     composed content (CrAppWidget) takes over, required by the platform widget
+     host; itself never actually seen in normal use. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />

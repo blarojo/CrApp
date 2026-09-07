@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CrApp</string>
+    <string name="widget_description">Today\'s bowel movement, food, and energy counts, plus one-tap Add BM / Add Food buttons.</string>
 </resources>
