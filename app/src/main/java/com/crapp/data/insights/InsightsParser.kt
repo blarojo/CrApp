@@ -28,6 +28,11 @@ object InsightsParser {
                     severity = when (o.optString("severity", "info").lowercase()) {
                         "notable" -> InsightSeverity.NOTABLE
                         else -> InsightSeverity.INFO
+                    },
+                    section = when (o.optString("section", "other").lowercase()) {
+                        "bowel_progression" -> InsightSection.BOWEL_PROGRESSION
+                        "mood_food_correlation" -> InsightSection.MOOD_FOOD_CORRELATION
+                        else -> InsightSection.OTHER
                     }
                 )
             }
@@ -57,6 +62,7 @@ object InsightsParser {
         return InsightsReport(
             generatedAt = if (root.has("generatedAt") && !root.isNull("generatedAt")) root.optString("generatedAt") else null,
             summary = if (root.has("summary") && !root.isNull("summary")) root.optString("summary") else null,
+            dataCompleteness = if (root.has("dataCompleteness") && !root.isNull("dataCompleteness")) root.optString("dataCompleteness") else null,
             insights = insights,
             series = series
         )

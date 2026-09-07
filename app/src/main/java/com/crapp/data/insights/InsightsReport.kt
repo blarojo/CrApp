@@ -10,16 +10,34 @@ package com.crapp.data.insights
 data class InsightsReport(
     val generatedAt: String?,
     val summary: String?,
+    /**
+     * A short caveat on data completeness (e.g. "Dog-walker-reported walks don't
+     * include a consistency score, so walk movements are counted but excluded from
+     * consistency correlations.") -- the source data is never complete, since not
+     * everyone who walks the dog uses the app, so the skill is expected to say
+     * plainly what it couldn't cover rather than silently ignoring the gap.
+     */
+    val dataCompleteness: String?,
     val insights: List<Insight>,
     val series: List<InsightSeries>
 )
 
 enum class InsightSeverity { INFO, NOTABLE }
 
+/**
+ * Which of the report's fixed sections an [Insight] belongs to, so the Insights
+ * screen can group cards under headings instead of one flat list -- see
+ * `.claude/skills/crapp-insights/SKILL.md` §3 for what each section covers.
+ * [OTHER] is the fallback for a schema-1 file (predates sections) or an
+ * unrecognized value, so older reports still render instead of failing to parse.
+ */
+enum class InsightSection { BOWEL_PROGRESSION, MOOD_FOOD_CORRELATION, OTHER }
+
 data class Insight(
     val title: String,
     val detail: String,
-    val severity: InsightSeverity
+    val severity: InsightSeverity,
+    val section: InsightSection = InsightSection.OTHER
 )
 
 enum class SeriesKind { LINE, BAR }
