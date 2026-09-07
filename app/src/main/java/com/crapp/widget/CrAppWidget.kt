@@ -15,16 +15,17 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.crapp.CrAppApplication
 import com.crapp.MainActivity
@@ -58,35 +59,40 @@ class CrAppWidget : GlanceAppWidget() {
     }
 }
 
+/**
+ * A compact, roughly-square 2x2 layout (see `res/xml/crapp_widget_info.xml`):
+ * a small rounded "today" chip up top, and the two quick-add buttons stacked full-
+ * width underneath (not side by side -- easier to tap accurately at this size, and
+ * reads better than two squeezed half-width buttons). The whole stack is centered
+ * within the widget's real allocated area rather than pinned to the top, since a
+ * launcher's actual 2x2 slot is usually taller than the content needs and
+ * top-alignment left an awkward slab of empty space below the content.
+ */
 @Composable
 private fun CrAppWidgetContent(counts: WidgetTodayCounts) {
     val context = LocalContext.current
-    Column(
+    Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(GlanceTheme.colors.background)
-            .cornerRadius(16.dp)
-            .padding(12.dp)
+            .cornerRadius(24.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = summaryText(counts),
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = GlanceTheme.colors.onBackground
-            )
-        )
-        Spacer(modifier = GlanceModifier.height(12.dp))
-        Row(modifier = GlanceModifier.fillMaxWidth()) {
+        Column(
+            modifier = GlanceModifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            SummaryChip(counts)
+            Spacer(modifier = GlanceModifier.height(10.dp))
             WidgetButton(
+                icon = "💩",
                 label = "Add BM",
-                modifier = GlanceModifier.defaultWeight(),
                 onClick = actionStartActivity(logBowelMovementIntent(context))
             )
-            Spacer(modifier = GlanceModifier.width(8.dp))
+            Spacer(modifier = GlanceModifier.height(6.dp))
             WidgetButton(
+                icon = "🍗",
                 label = "Add Food",
-                modifier = GlanceModifier.defaultWeight(),
                 onClick = actionStartActivity(logFoodIntent(context))
             )
         }
@@ -94,34 +100,70 @@ private fun CrAppWidgetContent(counts: WidgetTodayCounts) {
 }
 
 /**
- * "💩 6 · 🍗 1 · ⚡ 1" -- matches `HomeScreen`'s own "Today" hero card: the
- * bowel-movement count always shows, food/energy only when non-zero (same
- * "Also today: ..." convention), so a quiet day doesn't clutter the widget with
- * zeroes.
+ * The "today" summary as a small rounded chip (matching `HomeScreen`'s own Today
+ * card, which fills a `primaryContainer` card the same way) rather than plain text
+ * floating on the widget background -- gives it real visual weight as the headline
+ * number it is. Bowel movements always show; food/energy only when non-zero, same
+ * "Also today: ..." convention as the app's own Today card, so a quiet day doesn't
+ * clutter a widget this small with zeroes.
  */
-private fun summaryText(counts: WidgetTodayCounts): String {
+@Composable
+private fun SummaryChip(counts: WidgetTodayCounts) {
+    Column(
+        modifier = GlanceModifier
+            .background(GlanceTheme.colors.primaryContainer)
+            .cornerRadius(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "💩 ${counts.bowelMovements}",
+            style = TextStyle(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = GlanceTheme.colors.onPrimaryContainer,
+                textAlign = TextAlign.Center
+            )
+        )
+        extrasText(counts)?.let { extras ->
+            Text(
+                text = extras,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = GlanceTheme.colors.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+    }
+}
+
+/** "🍗 3   ⚡ 1", or null if both are zero (nothing to add below the headline number). */
+private fun extrasText(counts: WidgetTodayCounts): String? {
     val parts = buildList {
-        add("💩 ${counts.bowelMovements}")
         if (counts.food > 0) add("🍗 ${counts.food}")
         if (counts.energy > 0) add("⚡ ${counts.energy}")
     }
-    return parts.joinToString(" · ")
+    return parts.takeIf { it.isNotEmpty() }?.joinToString("   ")
 }
 
+/** A full-width, pill-shaped quick-add button -- stacked, not side by side, so each stays easy to tap accurately at 2x2 size. */
 @Composable
-private fun WidgetButton(label: String, modifier: GlanceModifier, onClick: androidx.glance.action.Action) {
+private fun WidgetButton(icon: String, label: String, onClick: androidx.glance.action.Action) {
     Text(
-        text = label,
-        modifier = modifier
+        text = "$icon  $label",
+        modifier = GlanceModifier
+            .fillMaxWidth()
             .background(GlanceTheme.colors.primary)
-            .cornerRadius(8.dp)
-            .padding(vertical = 8.dp, horizontal = 4.dp)
+            .cornerRadius(20.dp)
+            .padding(vertical = 10.dp, horizontal = 12.dp)
             .clickable(onClick),
         style = TextStyle(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             color = GlanceTheme.colors.onPrimary,
-            textAlign = androidx.glance.text.TextAlign.Center
+            textAlign = TextAlign.Center
         )
     )
 }

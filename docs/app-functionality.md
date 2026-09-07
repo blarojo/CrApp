@@ -369,14 +369,26 @@ built on Jetpack Glance — the Compose-based widget API, not classic `RemoteVie
 to stay in the same UI toolkit as the rest of the app) — add it the normal Android
 way: long-press an empty spot on the home screen → **Widgets** → **CrApp**.
 
-- ✅ **Summary row** — today's bowel-movement count (always shown), plus food and
-  energy counts when non-zero, e.g. "💩 6 · 🍗 3 · ⚡ 1" — the same numbers and the
-  same "only show if non-zero" convention as `HomeScreen`'s own "Today" hero card,
-  computed by the exact same shared logic (`computeWidgetTodayCounts`, built on the
-  same `Instant.isToday()` primitive `HomeViewModel` uses for its own Today count —
-  see `com.crapp.util.Today.kt`) rather than a second implementation that could
-  drift from the app's own numbers. Deliberately excludes medication/walk counts,
-  to keep the widget compact. Confirmed on-device: added the widget via the real
+**Layout: 2×2, not the original wider 3×2** — a rounded chip badge up top (the
+count, on a `primaryContainer` background, echoing `HomeScreen`'s own Today card
+rather than plain text floating on the widget background) and the two quick-add
+buttons stacked full-width underneath (each its own rounded pill with an icon —
+"💩 Add BM" / "🍗 Add Food" — not squeezed side by side), the whole stack centered
+in the widget's real allocated area instead of pinned to the top. The original
+layout (inline text summary, two half-width buttons in a row, content left
+top-aligned with a slab of empty space below it) shipped working but looked
+unpolished — this is a deliberate visual pass on top of the same underlying data
+and behavior, not a functional change.
+
+- ✅ **Summary chip** — a rounded badge with today's bowel-movement count as the
+  bold headline number ("💩 6"), plus a smaller line underneath for food/energy
+  counts when non-zero ("🍗 3   ⚡ 1") — the same numbers and the same "only show
+  if non-zero" convention as `HomeScreen`'s own "Today" hero card, computed by the
+  exact same shared logic (`computeWidgetTodayCounts`, built on the same
+  `Instant.isToday()` primitive `HomeViewModel` uses for its own Today count — see
+  `com.crapp.util.Today.kt`) rather than a second implementation that could drift
+  from the app's own numbers. Deliberately excludes medication/walk counts, to
+  keep the widget compact. Confirmed on-device: added the widget via the real
   system picker (a genuine preview showing the real launcher icon, not the default
   gray placeholder), and its numbers matched the app's own Today card exactly.
 - ✅ **"Add BM" button** — opens the app directly on the Log Bowel Movement screen,
