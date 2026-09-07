@@ -12,7 +12,8 @@ Specs 1–11 from an earlier draft of this file (bowel movement amount, tap-to-i
 adjustable dashboard window, location + night-time, energy logging, walker-logged
 walks, the Wear OS companion app, reminders/notifications, photo attachment,
 structured ingredient data, structured dose/amount fields, and AI-generated
-insights v2) have all shipped and been documented as real features — see
+insights v2), plus **spec 14 (predefined food amount quick-buttons)**, have all
+shipped and been documented as real features — see
 [app-functionality.md](app-functionality.md) for what each one does today and its
 current testing status, and [development-plan.md](development-plan.md) for when each
 was built. They've been removed from this file since they're no longer "future" —
@@ -34,8 +35,6 @@ up or a new screen introduces an un-keyed list or a main-thread DB call.
   text-entry version shows it's worth the jump. See spec 12 below.
 - Multi-dog support (would require introducing a `Dog` entity and scoping all
   queries). See spec 13 below.
-- Predefined food amount quick-buttons ("1 cup", "1 tin (400g)") on the food-logging
-  screen, to save a few taps on the most common portions. See spec 14 below.
 - A home screen widget for quick-glance counts and one-tap logging, without opening
   the app first. See spec 15 below.
 
@@ -82,69 +81,6 @@ so it's ready when that justification shows up.
 - **Recommendation:** lowest priority in this list unless a second dog is actually
   imminent — cost is high and every other feature above becomes slightly more complex
   to build on top of once `dogId` scoping exists everywhere.
-
-### 14. Predefined food amount quick-buttons
-
-Covers *"Pre defined food amounts, please add a button for '1 cup' and '1 tin
-(400g)'."*
-
-**Status: not started — spec only, do not build yet.**
-
-- **Problem:** `FoodLogScreen` already has a structured amount value+unit pair
-  (spec 10, shipped — see `app-functionality.md` §2) with a unit dropdown that
-  includes `cup` and `tin (400g)` among its options, but every entry still requires
-  typing/picking the numeric value and unit from scratch each time, even though in
-  practice most entries are one of a small number of common portions. This is
-  exactly the kind of repeated-friction case the backlog's "Good DevEx and snappy UI
-  design" principle calls out.
-- **Requirements:**
-  1. Add two quick-fill buttons/chips on `FoodLogScreen`, labeled **"1 cup"** and
-     **"1 tin (400g)"**, positioned near the existing amount fields (structured
-     value/unit + free-text amount).
-  2. Tapping a button fills **both** the structured fields (`amountValue = 1.0`,
-     `amountUnit = "cup"` or `"tin (400g)"`) **and** the free-text `amount` field
-     (`"1 cup"` / `"1 tin (400g)"`) in one tap, so a report or CSV row that only
-     looks at the free-text field still reads correctly.
-  3. The fields stay directly editable after a quick-fill tap — this is a starting
-     point, not a locked value. Tapping a different quick-fill button, or the same
-     one again, simply overwrites the fields (no toggle/undo state to track).
-  4. Quick-fill buttons don't replace the existing manual entry path — someone
-     feeding a different amount (half a tin, 2 cups) still uses the existing numeric
-     field + unit dropdown as today.
-- **Data model:** none — reads/writes the existing `FoodEntry.amount` /
-  `amountValue` / `amountUnit` fields (spec 10). No migration needed.
-- **UI:** two `FilterChip`- or `AssistChip`-style tap targets (matching the app's
-  existing chip-selector convention used throughout the logging screens), likely a
-  small `Row` directly above or below the amount fields on `FoodLogScreen`. Exact
-  copy: "1 cup" and "1 tin (400g)" (matches the user's own wording verbatim, and the
-  existing `amountUnit` option strings, so no new unit string needs inventing).
-- **Open questions:**
-  - Should the list of quick-fill buttons be a hardcoded pair, or backed by a small
-    list so more can be added later without another spec (e.g. a per-food "usual
-    amount" inferred from history)? Recommend a small `data class QuickAmount(label,
-    value, unit)` list literal to start — trivial to extend later, no premature
-    abstraction (no catalog/DB table) for just two fixed buttons.
-  - Do the two buttons apply globally, or should they eventually vary by selected
-    food (e.g. treats logged by count, not cup/tin)? Out of scope for this spec —
-    ship the two fixed, food-independent buttons first; revisit if usage shows a
-    food-specific need.
-- **Testing requirements:**
-  - Unit test (`FoodLogViewModelTest` or equivalent): tapping each quick-fill button
-    sets `amountValue`, `amountUnit`, and `amount` to the expected values on the
-    screen's UI state; confirm a subsequent manual edit still overrides them (no
-    stale/locked state).
-  - On-device click test: tap "1 cup", confirm both the structured unit dropdown and
-    the free-text field reflect it, save, confirm it round-trips correctly through
-    History's edit view and through CSV export's `amount`/`amount_value`/
-    `amount_unit` columns. Repeat for "1 tin (400g)". Confirm manual entry (a food
-    logged without tapping a quick-fill button) is unaffected.
-- **Documentation requirements:**
-  - Update `app-functionality.md` §2 (Food logging + Food Catalog) to describe the
-    two quick-fill buttons as a shipped feature once built, including their exact
-    labels and what they fill.
-  - Update `app-functionality.md`'s Testing status section once click-tested.
-  - No `development-plan.md` change needed unless this gets promoted into a phase —
-    a `backlog.md` spec update (status line here) is enough while it's still pending.
 
 ### 15. Home screen widget
 
