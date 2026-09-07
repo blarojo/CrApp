@@ -7,7 +7,7 @@ import com.crapp.ui.home.EnergyPoint
 import java.time.LocalDate
 
 /**
- * Recent energy-level trend (docs/future-features.md spec 4), backed by the same
+ * Recent energy-level trend (docs/backlog.md spec 4), backed by the same
  * [ScoreTrendChart] engine as [ConsistencyTrendChart] -- real time-scaled x-axis,
  * one date label per day, tap-to-inspect.
  *

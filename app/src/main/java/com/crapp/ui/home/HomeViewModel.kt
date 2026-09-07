@@ -32,7 +32,7 @@ data class EnergyPoint(val timestamp: Instant, val level: EnergyLevel)
 data class DailyCount(val date: LocalDate, val count: Int)
 
 /**
- * Selectable dashboard time window (docs/future-features.md spec 2) -- replaces the
+ * Selectable dashboard time window (docs/backlog.md spec 2) -- replaces the
  * old fixed "last 14 points" / "last 7 days" constants. One shared selection drives
  * every historical chart rather than independent ones, since a single control is
  * simpler to reason about and all of them describe the same recent period.

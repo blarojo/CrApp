@@ -34,7 +34,7 @@ data class MedicationEntry(
     val notes: String? = null,
     /**
      * Structured dose, additive to (not replacing) the free-text [dose] --
-     * docs/future-features.md's dose/amount spec. Only meaningful together with
+     * docs/backlog.md's dose/amount spec. Only meaningful together with
      * [doseUnit]; both null means "not recorded structurally," not zero.
      */
     val doseValue: Double? = null,

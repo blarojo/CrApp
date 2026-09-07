@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 
-/** Fixed unit choices for [FoodLogUiState.amountUnit] -- docs/future-features.md's dose/amount spec. */
+/** Fixed unit choices for [FoodLogUiState.amountUnit] -- docs/backlog.md's dose/amount spec. */
 val FOOD_AMOUNT_UNITS = listOf("cup", "tbsp", "g", "tin (400g)")
 
 data class FoodLogUiState(

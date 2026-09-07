@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Join row: one [Ingredient] appearing in one [Food]'s label (docs/future-features.md
+ * Join row: one [Ingredient] appearing in one [Food]'s label (docs/backlog.md
  * spec 9). [position] preserves the label's original order -- pet-food labels list
  * ingredients by descending concentration, so that ordering carries real meaning for
  * an allergy read, not just display.

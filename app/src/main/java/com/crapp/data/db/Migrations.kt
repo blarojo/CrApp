@@ -11,7 +11,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 /**
- * Combines every docs/future-features.md schema change shipped together, rather
+ * Combines every docs/backlog.md schema change shipped together, rather
  * than one migration per spec, since several of them add columns to the same
  * `bowel_movement` table:
  *  - spec 1 (amount), spec 3 (location/night-time/photo): new nullable/defaulted

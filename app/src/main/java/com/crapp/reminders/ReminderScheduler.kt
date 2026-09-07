@@ -12,7 +12,7 @@ import java.time.Duration
 
 /**
  * Schedules/cancels the periodic [ReminderWorker] job based on the saved
- * [com.crapp.data.prefs.NotificationPreferences] -- docs/future-features.md spec 6.
+ * [com.crapp.data.prefs.NotificationPreferences] -- docs/backlog.md spec 6.
  * Checks every 6 hours (a daily check would leave up to 24h between an overdue
  * movement and the reminder actually firing) rather than a shorter interval;
  * WorkManager's minimum periodic interval is 15 minutes but polling that often for

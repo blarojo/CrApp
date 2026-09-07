@@ -78,7 +78,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
-    // Wear OS companion app sync (docs/future-features.md spec 5, wear/ module) --
+    // Wear OS companion app sync (docs/backlog.md spec 5, wear/ module) --
     // the Wearable Data Layer API this phone-side listener uses is only shipped as
     // part of Play Services, there's no way around this dependency for that feature.
     implementation(libs.play.services.wearable)

@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 
-/** Fixed unit choices for [MedicationLogUiState.doseUnit] -- docs/future-features.md's dose/amount spec. */
+/** Fixed unit choices for [MedicationLogUiState.doseUnit] -- docs/backlog.md's dose/amount spec. */
 val MEDICATION_DOSE_UNITS = listOf("mg", "ml", "mcg")
 
 data class MedicationLogUiState(

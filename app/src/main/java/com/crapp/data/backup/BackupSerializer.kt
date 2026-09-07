@@ -40,7 +40,7 @@ data class BackupData(
  * preserves every row's id and foreign keys exactly, so it restores byte-for-byte.
  *
  * `energyEntries`/`walkEntries` and the new `bowel_movement`/`food_entry`/
- * `medication_entry` fields (docs/future-features.md specs 1/3/4/5 and the
+ * `medication_entry` fields (docs/backlog.md specs 1/3/4/5 and the
  * dose/amount spec) are read with `opt*` so an *older* backup file (from before
  * those fields existed) still restores cleanly -- missing means "not recorded,"
  * same as a fresh nullable column after the schema migration.

@@ -5,7 +5,7 @@ package com.crapp.data.insights
  * skill in `.claude/skills/`, which reads the app's own CSV export and writes one of
  * these) and uploaded back in via the Insights screen -- docs/development-plan.md
  * Phase 8's "CSV export -> Claude analysis skill -> in-app dashboard upload" idea,
- * promoted from future-features.md.
+ * promoted from backlog.md.
  */
 data class InsightsReport(
     val generatedAt: String?,

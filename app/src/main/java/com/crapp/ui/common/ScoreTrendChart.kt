@@ -60,7 +60,7 @@ data class ScoredPoint(val timestamp: Instant, val score: Int, val label: String
  * spaced regardless of when they happened. Scrolls horizontally with one date label
  * per day, and opens scrolled to the latest day.
  *
- * Tappable (docs/future-features.md spec 2): a touch device has no hover, so tapping
+ * Tappable (docs/backlog.md spec 2): a touch device has no hover, so tapping
  * near a point shows its exact date/time + [ScoredPoint.label] in a small caption
  * below the chart instead -- tap the same point again (or elsewhere) to dismiss it.
  */

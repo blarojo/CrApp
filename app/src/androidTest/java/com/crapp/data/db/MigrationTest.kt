@@ -62,7 +62,7 @@ class MigrationTest {
     }
 
     /**
-     * Verifies [MIGRATION_2_3] (docs/future-features.md specs 1/3/4/5/9 and the
+     * Verifies [MIGRATION_2_3] (docs/backlog.md specs 1/3/4/5/9 and the
      * dose/amount spec, all shipped in one version bump) against a real version-2
      * database: existing rows survive with the new columns null/false-defaulted,
      * and the new tables exist and are usable.

@@ -2,7 +2,7 @@ package com.crapp.data.db
 
 /**
  * Splits a [com.crapp.data.model.Food.ingredients] free-text label into canonical
- * ingredient names (docs/future-features.md spec 9). Used both for the one-time
+ * ingredient names (docs/backlog.md spec 9). Used both for the one-time
  * backfill of the 4 seeded foods ([IngredientBackfill]) and for any food added later
  * (manual entry today, OCR capture in a future spec) -- the same parsing step
  * applies either way.

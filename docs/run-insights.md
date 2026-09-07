@@ -1,7 +1,7 @@
 # Running the CrApp Insights skill
 
 Step-by-step instructions to generate an insights report and view it in the app.
-See [future-features.md spec 11](future-features.md#11-ai-generated-insights-v2-progression--moodfood-correlation)
+See [app-functionality.md §13](app-functionality.md#13-insights-ai-generated-report)
 for the design this implements, and
 [`.claude/skills/crapp-insights/SKILL.md`](../.claude/skills/crapp-insights/SKILL.md)
 for the skill's own authoritative workflow (this doc is the practical "how do I
@@ -18,7 +18,7 @@ upload back whatever it produces.
 ## 1. Export the data from CrApp
 
 1. Open CrApp on your phone.
-2. Tap **Export** (top of the Home screen, next to History).
+2. Tap the gear icon → **Settings** → **Export CSV**.
 3. Share the CSVs to somewhere your computer can get to — email them to
    yourself, save to Google Drive/Downloads, or use whatever share target gets
    files onto the machine you run Claude Code on. Five files are produced:
@@ -58,8 +58,8 @@ upload back whatever it produces.
 1. Get the `.json` file (not the `.md` one) onto your phone — the same way you
    got the CSVs off it, in reverse (email attachment, Drive, etc.). Save it
    somewhere the phone's file picker can see, e.g. Downloads.
-2. Open CrApp → tap **Insights** (top of the Home screen, next to History and
-   Export — also reachable via the gear icon → Settings → Insights).
+2. Open CrApp → tap **Insights** (top of the Home screen, next to History —
+   also reachable via the gear icon → Settings → Insights).
 3. Tap **Upload Report**, and pick the `.json` file.
 4. You should see:
    - A short summary paragraph, and (if the data had a real gap) a ⚠️

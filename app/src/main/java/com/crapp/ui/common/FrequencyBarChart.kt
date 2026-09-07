@@ -37,7 +37,7 @@ private val barColumnWidth = 44.dp
 private val chartHeight = 96.dp
 
 /**
- * Bowel movements per day over a selectable recent window (docs/future-features.md
+ * Bowel movements per day over a selectable recent window (docs/backlog.md
  * spec 2 -- was a fixed last-7-days; [days] is zero-filled for days with no entries
  * so gaps are visible rather than just missing bars). One series, single hue, per
  * docs/development-plan.md Phase 7.

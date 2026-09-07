@@ -22,7 +22,7 @@ data class WalkLogUiState(
 )
 
 /**
- * Backs the dog walker's walk-report screen (docs/future-features.md spec 5): a
+ * Backs the dog walker's walk-report screen (docs/backlog.md spec 5): a
  * count only, no per-movement detail. Deliberately separate from
  * [com.crapp.ui.bowel.BowelMovementLogScreen] -- see [WalkEntry]'s KDoc for why both
  * exist, and the screen's inline warning for avoiding double-counting.
