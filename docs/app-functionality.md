@@ -181,7 +181,13 @@ Screen: **Home** (`HomeScreen`). Split into two scroll sections so the screen an
 
 **Today** (top, always visible without scrolling): a filled hero card showing today's
 bowel-movement count in large type, last-logged relative time, and today's
-food/medication/energy/walk-report counts all in one line.
+food/medication/energy/walk-report counts all in one line. The bowel-movement count
+folds in dog-walker-reported [`walk_entry`](#5-walk-logging) counts too, not just
+individually-logged movements (`countBowelMovementsToday`, shared with the widget
+below) — logging a walk with a real count now moves this number the same day it's
+logged, matching how the "Movements per day" chart further down already did. This
+was a real bug (fixed): the hero number used to silently exclude walk-reported
+movements even though the chart below it didn't.
 
 **History** (below a divider, scrolls): a **1d** / 7d / 14d / 30d / 90d window chip
 row drives every chart and stat tile in this section together, filtering by real
@@ -381,17 +387,23 @@ the user's actual launcher only left room for the chip plus one button at true
 2×2 size; side-by-side with short labels is what actually fits a real 2×2 slot
 while still looking deliberate.
 
-- ✅ **Summary chip** — a rounded badge with today's bowel-movement count as the
+- **Summary chip** — a rounded badge with today's bowel-movement count as the
   bold headline number ("💩 6"), plus a smaller line underneath for food/energy
   counts when non-zero ("🍗 3   ⚡ 1") — the same numbers and the same "only show
   if non-zero" convention as `HomeScreen`'s own "Today" hero card, computed by the
-  exact same shared logic (`computeWidgetTodayCounts`, built on the same
-  `Instant.isToday()` primitive `HomeViewModel` uses for its own Today count — see
-  `com.crapp.util.Today.kt`) rather than a second implementation that could drift
-  from the app's own numbers. Deliberately excludes medication/walk counts, to
-  keep the widget compact. Confirmed on-device: added the widget via the real
-  system picker (a genuine preview showing the real launcher icon, not the default
-  gray placeholder), and its numbers matched the app's own Today card exactly.
+  exact same shared logic (`computeWidgetTodayCounts`, built on
+  `countBowelMovementsToday`/`Instant.isToday()` — see `com.crapp.util`) rather
+  than a second implementation that could drift from the app's own numbers. There's
+  no separate "walk" number shown (still deliberately excluded, to keep the widget
+  compact) but the headline bowel-movement count itself *does* fold in
+  dog-walker-reported counts — the same bug-fix as §7's hero card, see there for
+  detail. ✅ layout/numbers-match-Home confirmed on-device (before the walk-fold
+  fix existed); 🧪 the walk-fold behavior itself is unit-tested
+  (`WidgetTodayCountsTest`) but not yet click-tested live — the test phone was
+  locked when this fix was made.
+  Tapping the chip (not either button) opens the app on its normal Home screen — a
+  plain launch, no deep-link extra, so there's a way into the full dashboard
+  straight from the widget. 🧪 Not yet click-tested live for the same reason.
 - ✅ **"+BM" button** — opens the app directly on the Log Bowel Movement screen,
   reusing the exact same deep-link mechanism (`MainActivity.EXTRA_OPEN_LOG_BOWEL_MOVEMENT`)
   a reminder notification tap already uses, not a second path to the same
@@ -418,13 +430,17 @@ while still looking deliberate.
     (unused) — refresh is driven by the above instead, not the legacy
     once-every-30-minutes-minimum widget-metadata mechanism.
 - No new data model/migration — reads the same `BowelMovementDao`/`FoodDao`/
-  `EnergyEntryDao` data `HomeViewModel` already reads for its own Today card.
+  `EnergyEntryDao`/`WalkEntryDao` data `HomeViewModel` already reads for its own
+  Today card.
 
-**Status: implemented, unit-tested, and click-tested live on a real device** —
-widget placement, the summary numbers, both quick-add buttons, and the reactive
-refresh-on-write path are all confirmed working exactly as designed. Only the
-hourly midnight-rollover fallback remains unobserved live (see Testing status
-below) — everything else that was previously unverified now is.
+**Status: implemented, unit-tested, and mostly click-tested live on a real
+device** — widget placement, the summary numbers (as they stood before the
+walk-fold fix), both quick-add buttons, and the reactive refresh-on-write path are
+all confirmed working exactly as designed. Two things from the most recent pass
+(the walk-fold fix and tap-the-chip-to-open-Home) are unit-tested but not yet
+click-tested live — the test phone was locked at the time — plus the
+still-standing hourly midnight-rollover fallback. See Testing status below for
+the exact list.
 
 ## Data model
 
@@ -449,17 +465,30 @@ What's still genuinely unverified:
 
 - **Medication structured dose** (§3) — fields render correctly, but no dedicated
   save round-trip has been run for medication dose specifically.
-- **Home screen widget** (§14) — click-tested live, including after the
-  side-by-side-buttons layout revision: added via the real system widget picker
-  (correct preview, correct description), a genuine 2×2 instance confirmed via
-  `dumpsys appwidget`, summary numbers matched the app's Today card exactly, both
-  "+BM"/"+Food" buttons opened directly on the right screen, and the reactive
-  refresh-on-write path was confirmed (logged a real entry, the already-placed
-  widget updated on its own, no remove/re-add needed). The one thing still
-  unobserved: leaving the widget untouched across a real local-midnight rollover,
-  to confirm the hourly fallback job actually resets "today's" count — that needs
-  either a real elapsed midnight or a device clock
-  change to trigger, neither attempted yet.
+- **Home screen widget** (§14) — click-tested live for most of it, across two
+  earlier passes: added via the real system widget picker (correct preview,
+  correct description), a genuine 2×2 instance confirmed via `dumpsys appwidget`,
+  summary numbers matched the app's Today card exactly, both "+BM"/"+Food" buttons
+  opened directly on the right screen, and the reactive refresh-on-write path was
+  confirmed (logged a real entry, the already-placed widget updated on its own, no
+  remove/re-add needed). **Not yet click-tested live**, from the most recent
+  change (unit-tested only — the test phone was locked): the walk-count fold-in
+  fix (§7/§14 — a walk logged today should now move the headline "💩" number) and
+  tapping the summary chip to open Home. Also still unobserved: leaving the widget
+  untouched across a real local-midnight rollover, to confirm the hourly fallback
+  job actually resets "today's" count — that needs either a real elapsed midnight
+  or a device clock change to trigger, neither attempted yet.
+- **"Today" bowel-movement count folding in walk reports** (§7) — the bug fix
+  itself (`countBowelMovementsToday`, shared by `HomeViewModel` and the widget) is
+  covered by direct unit tests (`BowelMovementCountsTest`,
+  `WidgetTodayCountsTest`'s new walk case) and a new instrumented BDD test
+  (`WalkBowelMovementCountFlowTest`) that logs a real walk and asserts the Today
+  card's headline count reflects it — but that instrumented test hasn't actually
+  been run (needs `connectedAndroidTest`, which per project memory must not run
+  against a real device without a fresh backup first), and the manual click-test
+  couldn't happen either since the test phone was locked. Trustworthy on the
+  strength of the unit tests and a straightforward, well-isolated code change, but
+  genuinely not yet observed live end to end.
 - **Usual amount** (§2) — the schema migration (`MIGRATION_4_5`) was exercised for
   real (a genuine `adb install -r` over the real on-device database, confirmed
   clean via a stable process and no crash/SQL exception in logcat); the UI flow

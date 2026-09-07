@@ -11,6 +11,7 @@ import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.Location
 import com.crapp.data.model.MedicationEntry
 import com.crapp.data.model.WalkEntry
+import com.crapp.util.countBowelMovementsToday
 import com.crapp.util.isToday
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -199,7 +200,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             .groupingBy { it.timestamp.toLocalDate() }.eachCount()
 
         HomeUiState(
-            bowelMovementsToday = movements.count { it.timestamp.isToday(zone) },
+            bowelMovementsToday = countBowelMovementsToday(movements, walkEntries, zone),
             foodEntriesToday = foodEntries.count { it.timestamp.isToday(zone) },
             medicationEntriesToday = medications.count { it.timestamp.isToday(zone) },
             energyEntriesToday = energyEntries.count { it.timestamp.isToday(zone) },

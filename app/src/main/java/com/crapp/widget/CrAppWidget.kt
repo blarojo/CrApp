@@ -36,8 +36,10 @@ import kotlinx.coroutines.flow.first
 /**
  * Home screen widget (docs/backlog.md spec 15): today's bowel-movement/food/energy
  * counts at a glance, plus one-tap "+BM"/"+Food" buttons -- so the two most frequent
- * actions don't require opening the app first. Built on Jetpack Glance (not classic
- * `RemoteViews`) to stay in the same Compose idiom as the rest of the app.
+ * actions don't require opening the app first. Tapping the summary chip itself (not
+ * either button) opens the app on its normal Home screen. Built on Jetpack Glance
+ * (not classic `RemoteViews`) to stay in the same Compose idiom as the rest of the
+ * app.
  *
  * Refreshed two ways (see [CrAppApplication.onCreate] and [WidgetRefreshWorker]):
  * near-instantly on any relevant data change (a reactive collector, same pattern as
@@ -51,7 +53,8 @@ class CrAppWidget : GlanceAppWidget() {
         val counts = computeWidgetTodayCounts(
             movements = app.bowelMovementRepository.allMovements.first(),
             foodEntries = app.foodRepository.allFoodEntries.first(),
-            energyEntries = app.energyRepository.allEntries.first()
+            energyEntries = app.energyRepository.allEntries.first(),
+            walkEntries = app.walkRepository.allEntries.first()
         )
         provideContent {
             GlanceTheme {
@@ -86,7 +89,7 @@ private fun CrAppWidgetContent(counts: WidgetTodayCounts) {
             modifier = GlanceModifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SummaryChip(counts)
+            SummaryChip(counts, onClick = actionStartActivity(openAppIntent(context)))
             Spacer(modifier = GlanceModifier.height(8.dp))
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 WidgetButton(
@@ -112,14 +115,20 @@ private fun CrAppWidgetContent(counts: WidgetTodayCounts) {
  * number it is. Bowel movements always show; food/energy only when non-zero, same
  * "Also today: ..." convention as the app's own Today card, so a quiet day doesn't
  * clutter a widget this small with zeroes.
+ *
+ * Tapping the chip itself (as opposed to either quick-add button) just opens the
+ * app on its normal Home screen -- a plain launch, no deep-link extra -- so there's
+ * a way into the full dashboard straight from the widget without adding a third
+ * button.
  */
 @Composable
-private fun SummaryChip(counts: WidgetTodayCounts) {
+private fun SummaryChip(counts: WidgetTodayCounts, onClick: androidx.glance.action.Action) {
     Column(
         modifier = GlanceModifier
             .background(GlanceTheme.colors.primaryContainer)
             .cornerRadius(16.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -172,6 +181,12 @@ private fun WidgetButton(label: String, modifier: GlanceModifier, onClick: andro
         )
     )
 }
+
+/** A plain launch of the app, no deep-link extra -- lands on Home like tapping the launcher icon would. */
+private fun openAppIntent(context: Context): Intent =
+    Intent(context, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
 
 /** Reuses [MainActivity.EXTRA_OPEN_LOG_BOWEL_MOVEMENT] -- same deep-link mechanism as a reminder notification tap, not a second path to the same destination. */
 private fun logBowelMovementIntent(context: Context): Intent =

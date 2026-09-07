@@ -5,6 +5,7 @@ import com.crapp.data.model.EnergyEntry
 import com.crapp.data.model.EnergyLevel
 import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.MealType
+import com.crapp.data.model.WalkEntry
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.Instant
@@ -23,7 +24,7 @@ class WidgetTodayCountsTest {
 
     @Test
     fun computeWidgetTodayCounts_zeroEntries_allZero() {
-        val counts = computeWidgetTodayCounts(emptyList(), emptyList(), emptyList(), utc)
+        val counts = computeWidgetTodayCounts(emptyList(), emptyList(), emptyList(), emptyList(), utc)
 
         assertEquals(WidgetTodayCounts(0, 0, 0), counts)
     }
@@ -36,7 +37,7 @@ class WidgetTodayCountsTest {
             BowelMovement(timestamp = yesterday, consistency = 3) // excluded
         )
 
-        val counts = computeWidgetTodayCounts(movements, emptyList(), emptyList(), utc)
+        val counts = computeWidgetTodayCounts(movements, emptyList(), emptyList(), emptyList(), utc)
 
         assertEquals(WidgetTodayCounts(bowelMovements = 2, food = 0, energy = 0), counts)
     }
@@ -53,8 +54,24 @@ class WidgetTodayCountsTest {
             EnergyEntry(timestamp = today, level = EnergyLevel.A_LOT_OF_ENERGY)
         )
 
-        val counts = computeWidgetTodayCounts(movements, foodEntries, energyEntries, utc)
+        val counts = computeWidgetTodayCounts(movements, foodEntries, energyEntries, emptyList(), utc)
 
         assertEquals(WidgetTodayCounts(bowelMovements = 1, food = 1, energy = 2), counts)
+    }
+
+    @Test
+    fun computeWidgetTodayCounts_dogWalkerReportedWalk_foldsIntoBowelMovementsCount() {
+        // The exact bug this test guards against: a walk logged today used to leave
+        // the widget's headline bowel-movement number undercounted, since only
+        // individually-logged BowelMovement rows were counted.
+        val movements = listOf(BowelMovement(timestamp = today, consistency = 4))
+        val walkEntries = listOf(
+            WalkEntry(timestamp = today, bowelMovementCount = 3),
+            WalkEntry(timestamp = yesterday, bowelMovementCount = 5) // excluded
+        )
+
+        val counts = computeWidgetTodayCounts(movements, emptyList(), emptyList(), walkEntries, utc)
+
+        assertEquals(4, counts.bowelMovements) // 1 logged + 3 from today's walk report
     }
 }
