@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/** "No movement logged in over N hours" reminder settings -- docs/future-features.md spec 6 (reminders). */
+/** "No movement logged in over N hours" reminder settings -- docs/backlog.md spec 6 (reminders). */
 data class NotificationSettings(val enabled: Boolean = false, val thresholdHours: Int = 24)
 
 /**

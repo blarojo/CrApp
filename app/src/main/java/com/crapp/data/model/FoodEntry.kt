@@ -31,7 +31,7 @@ data class FoodEntry(
     val mealType: MealType,
     /**
      * Structured amount, additive to (not replacing) the free-text [amount] --
-     * docs/future-features.md's dose/amount spec. Only meaningful together with
+     * docs/backlog.md's dose/amount spec. Only meaningful together with
      * [amountUnit]; both null means "not recorded structurally," not zero.
      */
     val amountValue: Double? = null,

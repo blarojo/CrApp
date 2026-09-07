@@ -11,7 +11,7 @@ import java.time.Instant
  * no texture) -- the standard veterinary 7-point scale for dogs.
  *
  * [amount], [location]/[locationOther], [isNightTime], and [photoUri] are all from
- * docs/future-features.md, added together in schema version 3
+ * docs/backlog.md, added together in schema version 3
  * ([MIGRATION_2_3][com.crapp.data.db.MIGRATION_2_3]) -- all nullable/defaulted so
  * existing rows stay valid without a fabricated value.
  */

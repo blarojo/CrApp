@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Stores bowel-movement photos in the shared, user-visible `Pictures/CrApp` album via
- * `MediaStore` -- docs/future-features.md's photo-attachment spec. Deliberately not
+ * `MediaStore` -- docs/backlog.md's photo-attachment spec. Deliberately not
  * app-private storage (`context.filesDir` / `getExternalFilesDir()`): those are wiped
  * on uninstall, which would defeat the point of a photo log. A `MediaStore` row is
  * owned by this app's package name, so both the file and this app's access to it

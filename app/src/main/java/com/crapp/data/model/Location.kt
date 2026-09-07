@@ -1,7 +1,7 @@
 package com.crapp.data.model
 
 /**
- * Where a bowel movement happened (docs/future-features.md spec 3). [OTHER] pairs
+ * Where a bowel movement happened (docs/backlog.md spec 3). [OTHER] pairs
  * with [BowelMovement.locationOther] for anything that doesn't fit the three named
  * places, rather than forcing it into one of those or losing it as free text on its
  * own. [displayName] is shown in the UI instead of the raw enum constant name so

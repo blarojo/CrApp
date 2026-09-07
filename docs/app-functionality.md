@@ -3,7 +3,7 @@
 A collated, always-current list of everything the app actually does, grouped by
 area rather than by when it was built (that history lives in
 [development-plan.md](development-plan.md)) or what's still an idea
-([future-features.md](future-features.md)). Update this file whenever a feature is
+([backlog.md](backlog.md)). Update this file whenever a feature is
 added or changed — it's meant to be the one place that answers "does CrApp do X?"
 without archaeology through commits or specs.
 
@@ -263,7 +263,7 @@ Play Services update, before assuming the feature itself is broken.
 
 Top-level **Insights** link on Home, next to History — also reachable via
 Settings → Insights. See
-[future-features.md's "Shipped features" note](future-features.md#shipped-features)
+[backlog.md's "Shipped features" note](backlog.md#shipped-features)
 for background and `.claude/skills/crapp-insights/SKILL.md` for the authoritative
 analysis workflow.
 

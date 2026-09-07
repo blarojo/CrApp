@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Structures each [Food]'s free-text `ingredients` label into [Ingredient] +
- * [FoodIngredient] rows (docs/future-features.md spec 9) so a future insights
+ * [FoodIngredient] rows (docs/backlog.md spec 9) so a future insights
  * feature can query per-ingredient rather than string-match the label text.
  */
 class IngredientRepository(

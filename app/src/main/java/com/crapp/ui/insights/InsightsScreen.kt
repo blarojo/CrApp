@@ -53,7 +53,7 @@ import com.crapp.data.insights.SeriesPoint
  * see the `crapp-insights` Claude skill (`.claude/skills/crapp-insights/SKILL.md`),
  * which produces that file from the app's own CSV export.
  * docs/development-plan.md Phase 8 ("CSV export -> Claude analysis skill -> in-app
- * dashboard upload", promoted from future-features.md).
+ * dashboard upload", promoted from backlog.md).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

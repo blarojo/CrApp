@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 import java.time.ZoneId
 
-/** The hours (24h clock, device-local time) treated as "night" for [isNightTime] -- docs/future-features.md spec 3. */
+/** The hours (24h clock, device-local time) treated as "night" for [isNightTime] -- docs/backlog.md spec 3. */
 data class NightWindow(val startHour: Int = 22, val endHour: Int = 6) {
     /** Whether [instant] falls inside this window, handling the midnight wraparound (e.g. 22 -> 6). */
     fun isNightTime(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): Boolean {

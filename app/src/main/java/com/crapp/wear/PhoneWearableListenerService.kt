@@ -13,7 +13,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Phone side of the Wear OS companion app sync (docs/future-features.md spec 5):
+ * Phone side of the Wear OS companion app sync (docs/backlog.md spec 5):
  * receives the watch's "log a movement now" message and inserts a real
  * [BowelMovement] row -- the watch itself never touches the database directly, so
  * there's only ever one source of truth (see the `:wear` module's KDoc).

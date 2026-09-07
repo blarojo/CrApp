@@ -19,7 +19,7 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * "No movement logged in over N hours" reminder (docs/future-features.md spec 6) --
+ * "No movement logged in over N hours" reminder (docs/backlog.md spec 6) --
  * a periodic [androidx.work.WorkManager] job (survives process death/reboot, unlike
  * a plain in-memory timer) that checks the most recent [com.crapp.data.model.BowelMovement]
  * timestamp and posts a local notification if it's older than the configured

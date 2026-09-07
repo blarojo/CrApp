@@ -33,7 +33,7 @@ class IngredientParserTest {
     @Test
     fun parse_canonicalizesKnownSynonymsAcrossTheFourSeededLabels() {
         // Regression coverage for the exact mismatches flagged in
-        // docs/future-features.md spec 9's "canonicalization is the hard part" note --
+        // docs/backlog.md spec 9's "canonicalization is the hard part" note --
         // without this, the same real ingredient would fragment into duplicate rows.
         assertEquals(listOf("maize starch"), IngredientParser.parse("Corn starch"))
         assertEquals(listOf("flaxseed"), IngredientParser.parse("linseed (flaxseed)"))

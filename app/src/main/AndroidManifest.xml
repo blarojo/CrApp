@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Reminders (docs/future-features.md spec 6): required on Android 13+ (API 33+)
+    <!-- Reminders (docs/backlog.md spec 6): required on Android 13+ (API 33+)
          to post the "no movement logged" notification; requested at runtime from
          SettingsScreen when the reminder toggle is turned on. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Pre-scoped-storage devices (Android 9 and below) writing into the shared
-         Pictures/CrApp album (docs/future-features.md's photo-attachment spec);
+         Pictures/CrApp album (docs/backlog.md's photo-attachment spec);
          ignored on Android 10+, where MediaStore needs no such permission. Best-
          effort/untested on a device this old; the primary target is Android 10+. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
@@ -46,7 +46,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Wear OS companion app sync (docs/future-features.md spec 5): receives
+        <!-- Wear OS companion app sync (docs/backlog.md spec 5): receives
              the watch's "log a movement" message over the Wearable Data Layer API. -->
         <service
             android:name=".wear.PhoneWearableListenerService"

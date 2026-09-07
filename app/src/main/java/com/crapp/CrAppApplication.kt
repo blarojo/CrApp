@@ -54,7 +54,7 @@ class CrAppApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // One-time backfill (docs/future-features.md spec 9): parses every Food's
+        // One-time backfill (docs/backlog.md spec 9): parses every Food's
         // free-text ingredients into structured rows. Cheap no-op once already
         // structured, so safe to fire on every app start rather than only once ever.
         applicationScope.launch { ingredientRepository.backfillIfNeeded() }

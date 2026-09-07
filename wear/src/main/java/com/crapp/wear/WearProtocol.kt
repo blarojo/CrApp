@@ -2,7 +2,7 @@ package com.crapp.wear
 
 /**
  * Wearable Data Layer API paths shared with the phone app's
- * `com.crapp.wear.PhoneWearableListenerService` (docs/future-features.md spec 5).
+ * `com.crapp.wear.PhoneWearableListenerService` (docs/backlog.md spec 5).
  * Duplicated rather than shared via a Gradle module dependency -- not worth a
  * third `:shared` module just for these few constants. Keep in sync with the
  * phone app's copy (app/src/main/java/com/crapp/wear/WearProtocol.kt) if either

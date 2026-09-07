@@ -2,7 +2,7 @@ package com.crapp.wear
 
 /**
  * Wearable Data Layer API paths shared between this phone-side listener and the
- * `:wear` module's watch app (docs/future-features.md spec 5, Wear OS companion
+ * `:wear` module's watch app (docs/backlog.md spec 5, Wear OS companion
  * app). The two modules can't share a Gradle dependency without a third `:shared`
  * module just for these few constants, so the literal path strings are duplicated
  * on both sides -- keep them in sync if either changes; see `wear/.../WearProtocol.kt`.

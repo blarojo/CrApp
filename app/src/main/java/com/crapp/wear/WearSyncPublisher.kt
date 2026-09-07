@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Pushes today's bowel-movement count to a paired watch (docs/future-features.md
+ * Pushes today's bowel-movement count to a paired watch (docs/backlog.md
  * spec 5) via the Wearable Data Layer API's [com.google.android.gms.wearable.DataClient]
  * -- push rather than the watch polling on demand, since a `DataItem` update is
  * delivered once the watch is next reachable even if it was briefly out of BLE

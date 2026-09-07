@@ -26,7 +26,7 @@ Core needs:
 | CSV export | Export all data (or a date range) to a CSV file, shareable via Android's share sheet |
 | Local storage only | All data stays on-device in a local database; no network calls |
 
-Explicitly **out of scope for MVP** (tracked in [future-features.md](future-features.md)):
+Explicitly **out of scope for MVP** (tracked in [backlog.md](backlog.md)):
 multi-dog support, photos, reminders/notifications, analytics/dashboards, ingredient
 insights, cloud sync.
 
@@ -80,7 +80,7 @@ Food dropdown UX: the food-logging screen shows a searchable dropdown of existin
 (+ optional brand) — on save, it inserts into `food` and immediately selects it for
 the entry being logged, so adding a never-before-seen food doesn't interrupt the log
 flow. This also gives the future ingredient-insights feature (see
-[future-features.md](future-features.md)) a natural place to hang ingredient data
+[backlog.md](backlog.md)) a natural place to hang ingredient data
 later, without needing a schema change.
 
 **`medication_entry`**
@@ -140,7 +140,7 @@ CrApp/
 │   └── build.gradle.kts
 ├── docs/
 │   ├── development-plan.md
-│   ├── future-features.md
+│   ├── backlog.md
 │   └── app-functionality.md
 ├── build.gradle.kts
 ├── settings.gradle.kts
@@ -226,7 +226,7 @@ valuable than synthetic testing given the app's purpose.
 Home is now a lightweight dashboard: the today's-summary card from Phase 5, plus two
 in-app trend charts — hand-rolled with Compose `Canvas`/layout (no charting library,
 matching the project's no-unnecessary-dependencies stance) rather than the heavier
-CSV-export → Claude-analysis pipeline idea in future-features.md. Promotes that file's
+CSV-export → Claude-analysis pipeline idea in backlog.md. Promotes that file's
 "simple in-app trend charts" backlog item to shipped:
 - Consistency-over-time chart (`ConsistencyTrendChart`): last 14 bowel movements'
   Purina score as a connected line + points, fixed 1–7 y-domain (the known clinical
@@ -270,7 +270,7 @@ A larger, mixed-scope round:
   destructive fallback, per the AppDatabase persistence guarantee. New Food Catalog
   screen (Settings -> Manage Foods & Ingredients) to view/edit ingredients per food,
   manually or pasted from a label (photo/OCR capture is not implemented -- see
-  future-features.md). CSV export's `food_entries.csv` now includes an `ingredients`
+  backlog.md). CSV export's `food_entries.csv` now includes an `ingredients`
   column. A brand-new install is pre-seeded (via a `RoomDatabase.Callback.onCreate`,
   which only fires once, so it never touches an existing install) with the 4 real
   products requested, ingredients sourced from each manufacturer's own listing.
@@ -283,14 +283,14 @@ A larger, mixed-scope round:
   table including the food catalog). Outcomes show via both an in-app message and a
   `Toast` -- added the Toast after finding the in-app message didn't reliably survive
   the round-trip through the external system file-picker Activity on the test device.
-- **Insights**: promotes future-features.md's "CSV export -> Claude analysis skill ->
+- **Insights**: promotes backlog.md's "CSV export -> Claude analysis skill ->
   in-app dashboard upload" idea. New `.claude/skills/crapp-insights/SKILL.md` reads
   the app's CSV export and writes a JSON insights report (trends + flagged
   correlations); new Insights screen (Settings -> Insights) uploads and renders that
   report as insight cards plus generic line/bar charts, persisted locally via
   `InsightsPreferences` so it's still there next time the app opens.
   **Superseded by v2** (see app-functionality.md §13 — moved there from
-  future-features.md now that it's shipped): the skill now covers all 5 export CSVs (not just 3),
+  backlog.md now that it's shipped): the skill now covers all 5 export CSVs (not just 3),
   organizes findings into two fixed sections plus a data-completeness caveat, and
   the Insights link is also on Home now, not just Settings.
 
@@ -438,4 +438,4 @@ working correctly over test coverage for its own sake:
 6. CSV export.
 7. Polish, then cut a signed release build for daily use.
 
-See [future-features.md](future-features.md) for the backlog beyond this plan.
+See [backlog.md](backlog.md) for the backlog beyond this plan.

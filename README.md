@@ -36,5 +36,5 @@ phone are in [docs/development-plan.md §9](docs/development-plan.md#9-building-
 
 - [docs/development-plan.md](docs/development-plan.md) — full plan: feature set,
   data model, architecture, build phases, CSV export design, packaging/install steps.
-- [docs/future-features.md](docs/future-features.md) — backlog of ideas beyond the
+- [docs/backlog.md](docs/backlog.md) — backlog of ideas beyond the
   current plan.

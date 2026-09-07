@@ -31,7 +31,7 @@ import com.google.android.gms.wearable.Wearable
 import java.time.LocalDate
 
 /**
- * Wear OS companion app (docs/future-features.md spec 5): the poo icon, today's
+ * Wear OS companion app (docs/backlog.md spec 5): the poo icon, today's
  * count, and a `+` to log one -- nothing else. Food/medication/energy/walk stay
  * phone-only per the original requirement. Standalone-installable (see the
  * manifest's `com.google.android.wearable.standalone` meta-data), but only useful
