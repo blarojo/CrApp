@@ -369,16 +369,17 @@ built on Jetpack Glance — the Compose-based widget API, not classic `RemoteVie
 to stay in the same UI toolkit as the rest of the app) — add it the normal Android
 way: long-press an empty spot on the home screen → **Widgets** → **CrApp**.
 
-**Layout: 2×2, not the original wider 3×2** — a rounded chip badge up top (the
-count, on a `primaryContainer` background, echoing `HomeScreen`'s own Today card
-rather than plain text floating on the widget background) and the two quick-add
-buttons stacked full-width underneath (each its own rounded pill with an icon —
-"💩 Add BM" / "🍗 Add Food" — not squeezed side by side), the whole stack centered
-in the widget's real allocated area instead of pinned to the top. The original
-layout (inline text summary, two half-width buttons in a row, content left
-top-aligned with a slab of empty space below it) shipped working but looked
-unpolished — this is a deliberate visual pass on top of the same underlying data
-and behavior, not a functional change.
+**Layout: 2×2**, a rounded chip badge up top (the count, on a `primaryContainer`
+background, echoing `HomeScreen`'s own Today card rather than plain text floating
+on the widget background) and the two quick-add buttons side by side underneath
+("+BM" / "+Food"), the whole stack centered in the widget's real allocated area
+instead of pinned to the top. Went through two design passes on real-device
+feedback: the original shipped layout (inline text summary, two half-width
+buttons in a row) worked but looked unpolished; a first redesign fixed that with
+a nicer chip and icon-labelled buttons but *stacked* them full-width, which on
+the user's actual launcher only left room for the chip plus one button at true
+2×2 size; side-by-side with short labels is what actually fits a real 2×2 slot
+while still looking deliberate.
 
 - ✅ **Summary chip** — a rounded badge with today's bowel-movement count as the
   bold headline number ("💩 6"), plus a smaller line underneath for food/energy
@@ -391,12 +392,12 @@ and behavior, not a functional change.
   keep the widget compact. Confirmed on-device: added the widget via the real
   system picker (a genuine preview showing the real launcher icon, not the default
   gray placeholder), and its numbers matched the app's own Today card exactly.
-- ✅ **"Add BM" button** — opens the app directly on the Log Bowel Movement screen,
+- ✅ **"+BM" button** — opens the app directly on the Log Bowel Movement screen,
   reusing the exact same deep-link mechanism (`MainActivity.EXTRA_OPEN_LOG_BOWEL_MOVEMENT`)
   a reminder notification tap already uses, not a second path to the same
   destination. Confirmed on-device: tapping it from the home screen opens straight
   into that screen, never Home first.
-- ✅ **"Add Food" button** — opens the app directly on the Log Food screen, via a new
+- ✅ **"+Food" button** — opens the app directly on the Log Food screen, via a new
   equivalent extra (`MainActivity.EXTRA_OPEN_LOG_FOOD`) following the exact same
   pattern. Confirmed on-device the same way.
 - **Refresh strategy**, two parts:
@@ -448,14 +449,16 @@ What's still genuinely unverified:
 
 - **Medication structured dose** (§3) — fields render correctly, but no dedicated
   save round-trip has been run for medication dose specifically.
-- **Home screen widget** (§14) — click-tested live: added via the real system
-  widget picker (correct preview, correct description), summary numbers matched
-  the app's Today card exactly, both "Add BM"/"Add Food" buttons opened directly
-  on the right screen, and the reactive refresh-on-write path was confirmed (logged
-  a real entry, the already-placed widget updated on its own, no remove/re-add
-  needed). The one thing still unobserved: leaving the widget untouched across a
-  real local-midnight rollover, to confirm the hourly fallback job actually resets
-  "today's" count — that needs either a real elapsed midnight or a device clock
+- **Home screen widget** (§14) — click-tested live, including after the
+  side-by-side-buttons layout revision: added via the real system widget picker
+  (correct preview, correct description), a genuine 2×2 instance confirmed via
+  `dumpsys appwidget`, summary numbers matched the app's Today card exactly, both
+  "+BM"/"+Food" buttons opened directly on the right screen, and the reactive
+  refresh-on-write path was confirmed (logged a real entry, the already-placed
+  widget updated on its own, no remove/re-add needed). The one thing still
+  unobserved: leaving the widget untouched across a real local-midnight rollover,
+  to confirm the hourly fallback job actually resets "today's" count — that needs
+  either a real elapsed midnight or a device clock
   change to trigger, neither attempted yet.
 - **Usual amount** (§2) — the schema migration (`MIGRATION_4_5`) was exercised for
   real (a genuine `adb install -r` over the real on-device database, confirmed
