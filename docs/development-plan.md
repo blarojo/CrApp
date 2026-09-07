@@ -165,6 +165,28 @@ CrApp/
 No emulator is strictly required — since this app only matters on your actual phone,
 prefer testing on the physical device from day one (see §9).
 
+**Build performance** (the backlog's "Good DevEx and snappy UI design" principle,
+applied concretely): `gradle.properties` turns on Gradle's **build cache**
+(`org.gradle.caching=true`, reuses task outputs across clean builds and branch
+switches) and **configuration cache** (`org.gradle.configuration-cache=true`, skips
+re-evaluating the build scripts on a repeat build with no relevant changes).
+Measured on this project: a no-op `testDebugUnitTest :wear:assembleDebug` build with
+configuration cache on dropped from **~65s to ~1s**. Both were verified compatible
+with this project's specific build (AGP 8.7.2, Room/KSP, Jacoco, the `:wear` module)
+as of Gradle 8.9 — re-check for a "problems" warning in the build output after any
+AGP/Gradle/KSP version bump, since configuration-cache support is plugin-version
+dependent and a future upgrade could reintroduce an incompatibility.
+
+**UI responsiveness** (the same principle's other half): audited for the two most
+common Compose jank sources and found the app already compliant, so no code change
+was needed here — every dynamic, data-backed `LazyColumn`/`items(...)` list already
+passes a stable `key` (History's combined feed, the Food and Medication catalogs),
+so list updates diff correctly instead of re-binding every row; and every DAO write
+(`insert`/`update`/`delete`) is a Room `suspend fun`, which Room already dispatches
+off the main thread via its own query executor, so no logging screen blocks the UI
+thread on a save. Worth re-checking this same pair of things whenever a new
+data-backed list or DAO method is added, rather than assuming it stays true forever.
+
 ## 7. Development Phases
 
 **Phase 0 — Scaffolding** ✅ Complete
