@@ -55,16 +55,24 @@ class FoodRepository(
      *
      * If [name] already exists (e.g. it was auto-created via [getOrCreateFood] from a
      * log entry and never given ingredients), reuses that row and fills in whichever
-     * of [brand]/[ingredients] are non-null, rather than silently no-op'ing or
-     * creating a confusing duplicate-name row.
+     * of [brand]/[ingredients]/[usualAmountValue]+[usualAmountUnit] are non-null,
+     * rather than silently no-op'ing or creating a confusing duplicate-name row.
      */
-    suspend fun addOrUpdateFood(name: String, brand: String?, ingredients: String?): Long {
+    suspend fun addOrUpdateFood(
+        name: String,
+        brand: String?,
+        ingredients: String?,
+        usualAmountValue: Double? = null,
+        usualAmountUnit: String? = null
+    ): Long {
         val existing = foodDao.getByName(name)
         val food = Food(
             id = existing?.id ?: 0,
             name = name,
             brand = brand ?: existing?.brand,
-            ingredients = ingredients ?: existing?.ingredients
+            ingredients = ingredients ?: existing?.ingredients,
+            usualAmountValue = usualAmountValue ?: existing?.usualAmountValue,
+            usualAmountUnit = usualAmountUnit ?: existing?.usualAmountUnit
         )
         if (existing != null) {
             foodDao.update(food)

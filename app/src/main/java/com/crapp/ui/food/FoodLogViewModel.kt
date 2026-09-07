@@ -8,6 +8,7 @@ import com.crapp.CrAppApplication
 import com.crapp.data.model.Food
 import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.MealType
+import com.crapp.data.model.toAmountText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,10 +33,6 @@ val FOOD_QUICK_AMOUNTS = listOf(
     QuickAmount(label = "1 cup", value = 1.0, unit = "cup"),
     QuickAmount(label = "1 tin (400g)", value = 1.0, unit = "tin (400g)")
 )
-
-/** Renders a whole-number [Double] without a trailing ".0" so a quick-amount tap fills the value field with "1", not "1.0". */
-private fun Double.toAmountValueText(): String =
-    if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
 
 data class FoodLogUiState(
     val timestamp: Instant = Instant.now(),
@@ -94,8 +91,29 @@ class FoodLogViewModel(
         _uiState.update { it.copy(timestamp = timestamp) }
     }
 
+    /**
+     * Selects [food], and -- if it has a usual amount set ([Food.usualAmountValue] /
+     * [Food.usualAmountUnit], from the Food Catalog) -- pre-fills the amount fields
+     * from it too, same "pre-fill, stays editable, a later pick overwrites rather
+     * than accumulates" behavior as [onQuickAmountSelected]. A food with no usual
+     * amount set leaves the amount fields exactly as they were; selecting it never
+     * clears a manually-typed or quick-button-filled amount.
+     */
     fun onFoodSelected(food: Food) {
-        _uiState.update { it.copy(selectedFood = food) }
+        val value = food.usualAmountValue
+        val unit = food.usualAmountUnit
+        _uiState.update {
+            if (value != null && unit != null) {
+                it.copy(
+                    selectedFood = food,
+                    amount = "${value.toAmountText()} $unit",
+                    amountValueText = value.toAmountText(),
+                    amountUnit = unit
+                )
+            } else {
+                it.copy(selectedFood = food)
+            }
+        }
     }
 
     fun onAmountChange(amount: String) {
@@ -124,7 +142,7 @@ class FoodLogViewModel(
         _uiState.update {
             it.copy(
                 amount = quickAmount.label,
-                amountValueText = quickAmount.value.toAmountValueText(),
+                amountValueText = quickAmount.value.toAmountText(),
                 amountUnit = quickAmount.unit
             )
         }

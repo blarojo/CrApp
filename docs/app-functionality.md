@@ -36,7 +36,10 @@ via Settings).
 
 - Pick from a dropdown of known foods, **alphabetical** (matching the Food Catalog
   screen's own ordering, below), or add a new one inline without leaving the log
-  flow. ✅
+  flow. Selecting a food that has a **usual amount** set (see Food Catalog, below)
+  pre-fills the amount fields below from it — still fully overridable, and a food
+  with no usual amount set leaves the amount fields untouched rather than clearing
+  them. ✅
 - Meal type: Meal / Treat chip select. ✅
 - Amount: free text (e.g. "1/2 cup"). ✅
 - **Structured amount** ✅ — additive numeric value + unit (cup / tbsp / g / tin (400g)) fields
@@ -55,18 +58,36 @@ via Settings).
   (`FoodLoggingFlowTest`) for both the fill and the overwrite-not-accumulate
   behavior.
 - Food Catalog lists every known food **alphabetically**, and lets you edit an
-  existing one's ingredients as free text (manual entry or pasted from a label). ✅
+  existing one's ingredients as free text (manual entry or pasted from a label) and
+  its usual amount (see below). ✅
 - **Add new food manually** ✅ — a `+` button on the Food Catalog screen opens an
   "Add new food" dialog: Name (required), Brand (optional), Ingredients (optional,
-  typed/pasted or scanned — see below). Unlike the log screen's inline "Add new"
-  (name only), this is the one place to fill in all three fields **without** logging
-  a food entry first. Adding a name that already exists in the catalog updates that
-  row (fills in whichever fields were left blank before) rather than creating a
-  confusing duplicate. Round-tripped on-device: added "Peanut Butter" / "Homemade" /
-  "Peanuts, salt" from an empty dialog, confirmed it appeared in the catalog with
-  all three fields exactly right, in correct alphabetical position. Also covered by
-  an instrumented BDD-style UI test (`FoodCatalogFlowTest`) for both the fresh-add
-  and the update-existing-by-name-match cases.
+  typed/pasted or scanned — see below), Usual amount (optional, see below). Unlike
+  the log screen's inline "Add new" (name only), this is the one place to fill in
+  all four fields **without** logging a food entry first. Adding a name that already
+  exists in the catalog updates that row (fills in whichever fields were left blank
+  before) rather than creating a confusing duplicate. Round-tripped on-device: added
+  "Peanut Butter" / "Homemade" / "Peanuts, salt" from an empty dialog, confirmed it
+  appeared in the catalog with all three fields exactly right, in correct
+  alphabetical position. Also covered by an instrumented BDD-style UI test
+  (`FoodCatalogFlowTest`) for both the fresh-add and the
+  update-existing-by-name-match cases.
+- **Usual amount** 🧪 — a food's typical portion (value + unit, same
+  cup/tbsp/g/tin (400g) vocabulary as the structured amount fields above), set from
+  either the add-new or edit dialog. When a food has one, selecting it on the
+  food-logging screen pre-fills the amount fields from it (see §1's dropdown
+  bullet) — e.g. always "1 tin (400g)" for a wet food, "1 cup" for a dry food, "50 g"
+  for treats, one setup per food instead of re-typing or re-tapping a quick-amount
+  button every time, still fully overridable before saving. Shown on the food's
+  catalog row too ("Usual amount: 1 tin (400g)"). Backed by a new schema column
+  (`MIGRATION_4_5`) that was exercised for real — the actual `adb install -r` over
+  the real on-device database, not just the synthetic `MigrationTestHelper` test —
+  and confirmed clean (app launched, stayed running, no crash or SQL exception in
+  logcat); the UI flow itself (pre-fill on selection, still-overridable) is written
+  and covered by a new instrumented BDD-style test (`FoodUsualAmountFlowTest`) but
+  wasn't click-tested live this pass — the phone locked (fingerprint) before that
+  could happen — so treat the *behavior* as unverified live until that's done, even
+  though the *data* is confirmed safe.
 - **Scan label (OCR)** ✅ — a "📷 Scan label" button, in both the add-new and
   edit-ingredients dialogs, takes a photo of a food label and runs on-device text
   recognition (`com.google.mlkit:text-recognition`, the fully-bundled model — no
@@ -344,12 +365,15 @@ exactly.
 ## Data model
 
 Tables: `bowel_movement`, `food_entry`, `medication_entry`, `energy_entry`,
-`walk_entry`, `food` (catalog), `ingredient`, `food_ingredient`.
+`walk_entry`, `food` (catalog), `medication` (catalog), `ingredient`,
+`food_ingredient`.
 
 Notable columns beyond the obvious: `bowel_movement.{amount, location,
 locationOther, isNightTime, photoUri}`, `food_entry.{amountValue, amountUnit}`,
-`medication_entry.{doseValue, doseUnit}`. All added together in one migration,
-`MIGRATION_2_3` (schema version 2 → 3) — see
+`medication_entry.{doseValue, doseUnit}` (all added together in one migration,
+`MIGRATION_2_3`, schema version 2 → 3); `medication_entry.medicationId`
+(`MIGRATION_3_4`, version 3 → 4, added alongside the `medication` catalog table);
+`food.{usualAmountValue, usualAmountUnit}` (`MIGRATION_4_5`, version 4 → 5) — see
 `app/src/main/java/com/crapp/data/db/Migrations.kt`.
 
 ## Testing status
@@ -361,6 +385,12 @@ What's still genuinely unverified:
 
 - **Medication structured dose** (§3) — fields render correctly, but no dedicated
   save round-trip has been run for medication dose specifically.
+- **Usual amount** (§2) — the schema migration (`MIGRATION_4_5`) was exercised for
+  real (a genuine `adb install -r` over the real on-device database, confirmed
+  clean via a stable process and no crash/SQL exception in logcat); the UI flow
+  itself (setting one on a food, it pre-filling on selection, staying overridable)
+  is written and unit/instrumented-test-covered but not yet click-tested live on a
+  real device.
 - **Photo capture** (§1) — the save/remove/thumbnail flow and camera launch/cancel
   are verified; an actual photo capture still needs a manual test (can't be
   automated via `adb` on the test phone's camera app).

@@ -22,5 +22,20 @@ data class Food(
      * manually or copied from a label -- lets a food's ingredients be cross-checked
      * against logged bowel movements for potential triggers.
      */
-    val ingredients: String? = null
+    val ingredients: String? = null,
+    /**
+     * The portion this food is usually served in, e.g. 1 + "tin (400g)" for a wet
+     * food, 1 + "cup" for a dry food, 50 + "g" for treats -- a follow-up to
+     * docs/backlog.md spec 14's own open question ("should the quick-amount buttons
+     * eventually vary by selected food? ... revisit if usage shows a food-specific
+     * need" -- this is that revisit, per-food rather than two fixed global buttons).
+     * When set, selecting this food on the food-logging screen pre-fills
+     * [FoodEntry.amount]/[FoodEntry.amountValue]/
+     * [FoodEntry.amountUnit] from it (still fully overridable before saving, same
+     * "pre-fill, not lock" principle as the fixed quick-amount buttons). `null`
+     * means this food has no usual amount set -- selecting it leaves the amount
+     * fields as they were, it doesn't clear them.
+     */
+    val usualAmountValue: Double? = null,
+    val usualAmountUnit: String? = null
 )

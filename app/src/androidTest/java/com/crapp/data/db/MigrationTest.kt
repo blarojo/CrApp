@@ -159,4 +159,31 @@ class MigrationTest {
         assertTrue(afterDeleteCursor.isNull(afterDeleteCursor.getColumnIndexOrThrow("medicationId")))
         afterDeleteCursor.close()
     }
+
+    /**
+     * Verifies [MIGRATION_4_5] (a food's own usual amount): an existing catalog row
+     * survives with both new columns null, and they accept real values afterward.
+     */
+    @Test
+    fun migrate4To5_addsUsualAmountColumns_asNullForExistingRows() {
+        helper.createDatabase(dbName, 4).apply {
+            execSQL("INSERT INTO food (id, name, brand, ingredients) VALUES (1, 'Z/D', 'Hill''s', 'Chicken, water')")
+            close()
+        }
+
+        val migratedDb = helper.runMigrationsAndValidate(dbName, 5, true, MIGRATION_4_5)
+
+        val cursor = migratedDb.query("SELECT usualAmountValue, usualAmountUnit FROM food WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertTrue(cursor.isNull(cursor.getColumnIndexOrThrow("usualAmountValue")))
+        assertTrue(cursor.isNull(cursor.getColumnIndexOrThrow("usualAmountUnit")))
+        cursor.close()
+
+        migratedDb.execSQL("UPDATE food SET usualAmountValue = 1.0, usualAmountUnit = 'tin (400g)' WHERE id = 1")
+        val updatedCursor = migratedDb.query("SELECT usualAmountValue, usualAmountUnit FROM food WHERE id = 1")
+        assertTrue(updatedCursor.moveToFirst())
+        assertEquals(1.0, updatedCursor.getDouble(updatedCursor.getColumnIndexOrThrow("usualAmountValue")), 0.0)
+        assertEquals("tin (400g)", updatedCursor.getString(updatedCursor.getColumnIndexOrThrow("usualAmountUnit")))
+        updatedCursor.close()
+    }
 }

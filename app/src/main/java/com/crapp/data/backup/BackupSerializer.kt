@@ -76,6 +76,8 @@ object BackupSerializer {
                 put("name", f.name)
                 put("brand", f.brand)
                 put("ingredients", f.ingredients)
+                put("usualAmountValue", f.usualAmountValue)
+                put("usualAmountUnit", f.usualAmountUnit)
             }
         }))
 
@@ -171,7 +173,9 @@ object BackupSerializer {
                     id = o.getLong("id"),
                     name = o.getString("name"),
                     brand = o.optStringOrNull("brand"),
-                    ingredients = o.optStringOrNull("ingredients")
+                    ingredients = o.optStringOrNull("ingredients"),
+                    usualAmountValue = o.optDoubleOrNull("usualAmountValue"),
+                    usualAmountUnit = o.optStringOrNull("usualAmountUnit")
                 )
             }
         }.orEmpty()

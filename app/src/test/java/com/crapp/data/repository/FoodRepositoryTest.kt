@@ -124,6 +124,36 @@ class FoodRepositoryTest {
     }
 
     @Test
+    fun addOrUpdateFood_withUsualAmount_persistsValueAndUnit() = runBlocking {
+        val repo = newRepo()
+
+        val id = repo.addOrUpdateFood(
+            "HA Wet",
+            brand = "Purina",
+            ingredients = null,
+            usualAmountValue = 1.0,
+            usualAmountUnit = "tin (400g)"
+        )
+
+        val food = repo.getFoodById(id)
+        assertEquals(1.0, food?.usualAmountValue)
+        assertEquals("tin (400g)", food?.usualAmountUnit)
+    }
+
+    @Test
+    fun addOrUpdateFood_existingFoodWithNoUsualAmountYet_fillsItInOnTheSameRow() = runBlocking {
+        val repo = newRepo()
+        val originalId = repo.getOrCreateFood("Z/D")
+
+        val id = repo.addOrUpdateFood("Z/D", brand = null, ingredients = null, usualAmountValue = 50.0, usualAmountUnit = "g")
+
+        assertEquals(originalId, id)
+        val food = repo.getFoodById(id)
+        assertEquals(50.0, food?.usualAmountValue)
+        assertEquals("g", food?.usualAmountUnit)
+    }
+
+    @Test
     fun addOrUpdateFood_existingNameWithNoIngredientsYet_fillsThemInOnTheSameRow() = runBlocking {
         val repo = newRepo()
         // Simulates a food that was only ever auto-created via the log-flow's inline

@@ -115,3 +115,18 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_medication_entry_medicationId ON medication_entry (medicationId)")
     }
 }
+
+/**
+ * Adds a per-food "usual amount" (`Food.usualAmountValue`/`usualAmountUnit`) --
+ * a follow-up to docs/backlog.md spec 14's own open question about whether the
+ * quick-amount buttons should eventually vary by food. Nullable/additive, same as
+ * every other structured-amount column this app has added: existing catalog rows
+ * just get null (no usual amount set), which the food-logging screen already
+ * treats as "leave the amount fields as they are" rather than an error.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE food ADD COLUMN usualAmountValue REAL")
+        db.execSQL("ALTER TABLE food ADD COLUMN usualAmountUnit TEXT")
+    }
+}

@@ -18,7 +18,10 @@ import kotlinx.coroutines.launch
 data class AddFoodUiState(
     val name: String = "",
     val brand: String = "",
-    val ingredients: String = ""
+    val ingredients: String = "",
+    /** This food's usual portion, e.g. "1" + "tin (400g)" -- see [Food.usualAmountValue]. */
+    val usualAmountValueText: String = "",
+    val usualAmountUnit: String? = null
 )
 
 /** Backs the Food Catalog screen (docs/development-plan.md Phase 8): add/view/edit foods and their ingredients, delete old entries. */
@@ -48,10 +51,22 @@ class FoodCatalogViewModel(application: Application) : AndroidViewModel(applicat
         _editingFood.value = null
     }
 
-    fun saveIngredients(ingredients: String) {
+    /**
+     * Saves the edit-food dialog's fields: ingredients (unchanged from before) plus
+     * this food's usual amount, parsed the same way the food-logging screen parses
+     * its own structured-amount fields (blank value/no unit selected -> both null,
+     * i.e. "no usual amount set").
+     */
+    fun saveFoodEdits(ingredients: String, usualAmountValueText: String, usualAmountUnit: String?) {
         val food = _editingFood.value ?: return
         viewModelScope.launch {
-            repository.updateFood(food.copy(ingredients = ingredients.ifBlank { null }))
+            repository.updateFood(
+                food.copy(
+                    ingredients = ingredients.ifBlank { null },
+                    usualAmountValue = usualAmountValueText.toDoubleOrNull(),
+                    usualAmountUnit = usualAmountUnit
+                )
+            )
             _editingFood.value = null
         }
     }
@@ -76,6 +91,14 @@ class FoodCatalogViewModel(application: Application) : AndroidViewModel(applicat
         _addFoodState.update { it?.copy(ingredients = ingredients) }
     }
 
+    fun onNewFoodUsualAmountValueTextChange(text: String) {
+        _addFoodState.update { it?.copy(usualAmountValueText = text) }
+    }
+
+    fun onNewFoodUsualAmountUnitChange(unit: String) {
+        _addFoodState.update { it?.copy(usualAmountUnit = if (it.usualAmountUnit == unit) null else unit) }
+    }
+
     fun confirmAddNewFood() {
         val state = _addFoodState.value ?: return
         val name = state.name.trim()
@@ -84,7 +107,9 @@ class FoodCatalogViewModel(application: Application) : AndroidViewModel(applicat
             repository.addOrUpdateFood(
                 name = name,
                 brand = state.brand.trim().ifBlank { null },
-                ingredients = state.ingredients.trim().ifBlank { null }
+                ingredients = state.ingredients.trim().ifBlank { null },
+                usualAmountValue = state.usualAmountValueText.toDoubleOrNull(),
+                usualAmountUnit = state.usualAmountUnit
             )
             _addFoodState.value = null
             _message.value = "Added \"$name\"."

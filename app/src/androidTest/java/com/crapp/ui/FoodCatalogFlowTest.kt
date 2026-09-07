@@ -56,8 +56,8 @@ class FoodCatalogFlowTest {
         // Given the Food Catalog is empty and the user opens the add-food dialog.
         openFoodCatalog()
         composeTestRule.onNodeWithText(
-            "No foods yet -- tap + to add one (name, brand, ingredients), or log a food " +
-                "entry and it'll show up here automatically."
+            "No foods yet -- tap + to add one (name, brand, ingredients, usual amount), " +
+                "or log a food entry and it'll show up here automatically."
         ).assertExists()
 
         composeTestRule.onNodeWithContentDescription("Add food").performClick()
