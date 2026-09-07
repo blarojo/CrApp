@@ -34,8 +34,9 @@ the underlying `MediaStore` file.
 Screens: **Log/Edit Food** (`FoodLogScreen`), **Food Catalog** (`FoodCatalogScreen`,
 via Settings).
 
-- Pick from a dropdown of previously-used foods (most-recently-used first) or add a
-  new one inline without leaving the log flow. ✅
+- Pick from a dropdown of known foods, **alphabetical** (matching the Food Catalog
+  screen's own ordering, below), or add a new one inline without leaving the log
+  flow. ✅
 - Meal type: Meal / Treat chip select. ✅
 - Amount: free text (e.g. "1/2 cup"). ✅
 - **Structured amount** ✅ — additive numeric value + unit (cup / tbsp / g / tin (400g)) fields
@@ -53,8 +54,30 @@ via Settings).
   1 tin (400g)" exactly. Also covered by an instrumented BDD-style UI test
   (`FoodLoggingFlowTest`) for both the fill and the overwrite-not-accumulate
   behavior.
-- Food Catalog lets you add/edit a food's ingredients as free text (manual entry or
-  pasted from a label). ✅
+- Food Catalog lists every known food **alphabetically**, and lets you edit an
+  existing one's ingredients as free text (manual entry or pasted from a label). ✅
+- **Add new food manually** ✅ — a `+` button on the Food Catalog screen opens an
+  "Add new food" dialog: Name (required), Brand (optional), Ingredients (optional,
+  typed/pasted or scanned — see below). Unlike the log screen's inline "Add new"
+  (name only), this is the one place to fill in all three fields **without** logging
+  a food entry first. Adding a name that already exists in the catalog updates that
+  row (fills in whichever fields were left blank before) rather than creating a
+  confusing duplicate. Round-tripped on-device: added "Peanut Butter" / "Homemade" /
+  "Peanuts, salt" from an empty dialog, confirmed it appeared in the catalog with
+  all three fields exactly right, in correct alphabetical position. Also covered by
+  an instrumented BDD-style UI test (`FoodCatalogFlowTest`) for both the fresh-add
+  and the update-existing-by-name-match cases.
+- **Scan label (OCR)** ✅ — a "📷 Scan label" button, in both the add-new and
+  edit-ingredients dialogs, takes a photo of a food label and runs on-device text
+  recognition (`com.google.mlkit:text-recognition`, the fully-bundled model — no
+  network call, ever) to pre-fill the ingredients field for review/edit before
+  saving; never auto-saved unreviewed. The photo itself is disposable (app cache,
+  deleted right after each scan) — unlike a bowel-movement photo, it's not meant to
+  be kept. Camera launch (a real intent to the device's camera app, same mechanism
+  as the bowel-movement photo feature) and clean cancel-recovery are confirmed
+  on-device; an actual label capture + recognized-text pass couldn't be automated
+  the same way the bowel-movement photo capture couldn't (see Testing status) — a
+  real scan still needs a manual on-device test.
 - **4 starter foods are pre-seeded** on a brand-new install (Hill's z/d Mini dry,
   Hill's z/d wet, Purina Pro Plan HA Mousse, Purina Pro Plan HA Dry) with their
   real ingredient labels already filled in. ✅
@@ -327,6 +350,9 @@ What's still genuinely unverified:
 - **Photo capture** (§1) — the save/remove/thumbnail flow and camera launch/cancel
   are verified; an actual photo capture still needs a manual test (can't be
   automated via `adb` on the test phone's camera app).
+- **Scan label (OCR)** (§2) — same limitation as photo capture above: camera launch
+  and clean cancel-recovery are verified, but an actual label capture + on-device
+  text recognition pass couldn't be automated and still needs a manual test.
 - **Reminders' live notification firing** (§10, §11) — the toggle, permission
   prompt, and the underlying scheduled job are confirmed; the notification actually
   firing after 24h+ of no logging hasn't been observed live yet.

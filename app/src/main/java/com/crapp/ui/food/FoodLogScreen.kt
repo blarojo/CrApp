@@ -44,7 +44,7 @@ fun FoodLogScreen(
     viewModel: FoodLogViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val foods by viewModel.foodsByRecentUse.collectAsState()
+    val foods by viewModel.foods.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.saved) {

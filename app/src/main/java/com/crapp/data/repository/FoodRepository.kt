@@ -48,6 +48,36 @@ class FoodRepository(
     suspend fun updateFood(food: Food) = foodDao.update(food)
 
     /**
+     * Adds a new food to the catalog directly, without going through a logged food
+     * entry -- backs the Food Catalog's own "Add new food" flow (docs/backlog.md
+     * spec 12's manual-entry addition), as opposed to [getOrCreateFood] which backs
+     * the food-logging screen's inline "Add new" and never sets ingredients.
+     *
+     * If [name] already exists (e.g. it was auto-created via [getOrCreateFood] from a
+     * log entry and never given ingredients), reuses that row and fills in whichever
+     * of [brand]/[ingredients] are non-null, rather than silently no-op'ing or
+     * creating a confusing duplicate-name row.
+     */
+    suspend fun addOrUpdateFood(name: String, brand: String?, ingredients: String?): Long {
+        val existing = foodDao.getByName(name)
+        val food = Food(
+            id = existing?.id ?: 0,
+            name = name,
+            brand = brand ?: existing?.brand,
+            ingredients = ingredients ?: existing?.ingredients
+        )
+        if (existing != null) {
+            foodDao.update(food)
+            return existing.id
+        }
+        val insertedId = foodDao.insert(food)
+        if (insertedId != -1L) return insertedId
+        // Insert was ignored (unique constraint) due to a race with a concurrent
+        // identical insert -- same recovery as getOrCreateFood.
+        return foodDao.getByName(name)?.id ?: error("Failed to add food '$name'")
+    }
+
+    /**
      * Deletes [food] from the catalog -- backs the Food Catalog's "delete old ones"
      * flow. Refuses (returning [DeleteFoodResult.InUse] instead of deleting) if any
      * `food_entry` still references it, rather than letting the FK `RESTRICT`

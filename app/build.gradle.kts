@@ -82,6 +82,9 @@ dependencies {
     // the Wearable Data Layer API this phone-side listener uses is only shipped as
     // part of Play Services, there's no way around this dependency for that feature.
     implementation(libs.play.services.wearable)
+    // Label-photo ingredient capture (docs/backlog.md spec 12) -- on-device OCR, no
+    // network call.
+    implementation(libs.mlkit.text.recognition)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

@@ -101,9 +101,10 @@ fun SettingsScreen(
             SettingsSection(title = "Food Catalog") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        "Add or edit ingredients for foods you've logged, so they can be " +
-                            "cross-checked against ${AppConfig.DOG_NAME}'s bowel movements for " +
-                            "possible triggers.",
+                        "Add new foods (name, brand, ingredients -- typed, pasted, or scanned " +
+                            "from a label photo) or edit ones you've already logged, so they " +
+                            "can be cross-checked against ${AppConfig.DOG_NAME}'s bowel " +
+                            "movements for possible triggers.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedButton(onClick = onManageFoodCatalog, modifier = Modifier.fillMaxWidth()) {

@@ -58,7 +58,13 @@ class FoodLogViewModel(
     private val repository = (application as CrAppApplication).foodRepository
     private val editingId: Long = savedStateHandle.get<Long>("id") ?: -1L
 
-    val foodsByRecentUse: StateFlow<List<Food>> = repository.foodsByRecentUse
+    /**
+     * Alphabetical (docs/backlog.md spec 12's ordering request), same source
+     * (`repository.allFoods`) as the Food Catalog admin screen -- was previously
+     * most-recently-used-first ([FoodRepository.foodsByRecentUse], still used
+     * elsewhere e.g. backup/export where display order doesn't matter).
+     */
+    val foods: StateFlow<List<Food>> = repository.allFoods
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _uiState = MutableStateFlow(FoodLogUiState(isEditing = editingId != -1L))
