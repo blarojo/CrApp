@@ -52,6 +52,7 @@ fun HomeScreen(
     onLogWalk: () -> Unit,
     onViewHistory: () -> Unit,
     onExport: () -> Unit,
+    onViewInsights: () -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
@@ -66,6 +67,7 @@ fun HomeScreen(
                 actions = {
                     TextButton(onClick = onViewHistory) { Text("History") }
                     TextButton(onClick = onExport) { Text("Export") }
+                    TextButton(onClick = onViewInsights) { Text("Insights") }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }

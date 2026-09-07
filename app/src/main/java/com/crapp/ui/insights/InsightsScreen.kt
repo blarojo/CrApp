@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crapp.data.insights.Insight
+import com.crapp.data.insights.InsightSection
 import com.crapp.data.insights.InsightSeries
 import com.crapp.data.insights.InsightSeverity
 import com.crapp.data.insights.SeriesKind
@@ -117,10 +118,32 @@ fun InsightsScreen(
                         Text(summary, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                report.insights.forEach { insight -> InsightCard(insight) }
+                report.dataCompleteness?.let { caveat ->
+                    Text(
+                        "⚠️ $caveat",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                val bySection = report.insights.groupBy { it.section }
+                InsightSectionGroup("🩺 Bowel movement progression", bySection[InsightSection.BOWEL_PROGRESSION])
+                InsightSectionGroup("🍗 Mood, food & bowel correlations", bySection[InsightSection.MOOD_FOOD_CORRELATION])
+                InsightSectionGroup("Other findings", bySection[InsightSection.OTHER])
+
                 report.series.forEach { series -> SeriesCard(series) }
             }
         }
+    }
+}
+
+/** Renders one of [InsightSection]'s headings plus its cards -- omitted entirely when [insights] is null/empty, so an unused section (e.g. no data supported it) doesn't leave a dangling empty heading. */
+@Composable
+private fun InsightSectionGroup(heading: String, insights: List<Insight>?) {
+    if (insights.isNullOrEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(heading, style = MaterialTheme.typography.titleMedium)
+        insights.forEach { insight -> InsightCard(insight) }
     }
 }
 

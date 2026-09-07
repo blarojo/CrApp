@@ -50,6 +50,7 @@ fun CrAppNavHost(
                 onLogWalk = { navController.navigate(Routes.logWalk()) },
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
                 onExport = { navController.navigate(Routes.EXPORT) },
+                onViewInsights = { navController.navigate(Routes.INSIGHTS) },
                 onSettings = { navController.navigate(Routes.SETTINGS) }
             )
         }

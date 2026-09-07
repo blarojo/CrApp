@@ -88,6 +88,30 @@ class InsightsParserTest {
     }
 
     @Test
+    fun parse_sectionsAndDataCompleteness_readCorrectly() {
+        val json = """
+            {
+              "schemaVersion": 2,
+              "dataCompleteness": "Dog-walker walks have no consistency score.",
+              "insights": [
+                { "title": "a", "severity": "info", "section": "bowel_progression" },
+                { "title": "b", "severity": "info", "section": "mood_food_correlation" },
+                { "title": "c", "severity": "info", "section": "something_new" },
+                { "title": "d", "severity": "info" }
+              ]
+            }
+        """.trimIndent()
+
+        val report = InsightsParser.parse(json)
+
+        assertEquals("Dog-walker walks have no consistency score.", report.dataCompleteness)
+        assertEquals(InsightSection.BOWEL_PROGRESSION, report.insights[0].section)
+        assertEquals(InsightSection.MOOD_FOOD_CORRELATION, report.insights[1].section)
+        assertEquals(InsightSection.OTHER, report.insights[2].section) // unrecognized falls back
+        assertEquals(InsightSection.OTHER, report.insights[3].section) // missing defaults too
+    }
+
+    @Test
     fun parse_missingSchemaVersion_throws() {
         assertThrows(IllegalArgumentException::class.java) {
             InsightsParser.parse("""{"summary": "no marker"}""")

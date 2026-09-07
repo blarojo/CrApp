@@ -6,11 +6,13 @@ into active development as needed.
 
 ## Implementation & testing status
 
-All 12 specs below were reviewed and 10 of them (excluding OCR and multi-dog) were
-built in one batch, then click-tested on-device over several follow-up sessions. This
-table is that status as of the most recent session — see each spec's own section
-below for the full design, and `docs/app-functionality.md` for the always-current
-feature reference.
+All 13 specs below were reviewed. 10 of the original 12 (excluding OCR and
+multi-dog) were built in one batch, then click-tested on-device over several
+follow-up sessions; spec 11 (AI-generated insights v2) was **scoped and its
+data-model/schema plumbing built** in a later session but not yet run against a real
+export or click-tested. This table is that status as of the most recent session —
+see each spec's own section below for the full design, and
+`docs/app-functionality.md` for the always-current feature reference.
 
 | # | Feature | Implemented | Tested | Notes |
 |---|---|---|---|---|
@@ -22,10 +24,11 @@ feature reference.
 | 6 | Wear OS companion app | ✅ Yes | 🧪 Partial — blocked | Tested against a real Samsung Galaxy Watch5. The watch app installs and renders correctly, finds the phone, and reports every message send as successful. But the phone's Google Play Services consistently refuses to deliver it to CrApp (`WearableService: Failed to deliver message`), even after whitelisting battery optimization, cycling Bluetooth, restarting Play Services, and a full phone reboot. Signing certs and manifest/protocol were verified identical/correct. This looks like a platform-level incompatibility (this phone + Samsung watch + generic third-party `MessageClient`), not a CrApp bug — see spec 6's "On-device finding" note for the full investigation. |
 | 7 | Reminders / notifications | ✅ Yes | 🧪 Partial | The enable toggle, the real Android `POST_NOTIFICATIONS` permission prompt, the threshold chips, and the underlying WorkManager periodic job registration were all verified on-device (`dumpsys jobscheduler` shows it scheduled and already ran once). The real "no movement in 24h+" notification firing wasn't observed live, since that needs a real elapsed day with no logging. |
 | 8 | Photo attachment | ✅ Yes | 🧪 Partial | The MediaStore save/remove/thumbnail flow is implemented; camera launch and cancel-cleanup were verified, but an actual successful photo capture couldn't be automated via `adb` (this phone's camera app doesn't respond to synthetic shutter taps) — a real photo capture still needs your manual test. |
-| 9 | Structured ingredient data | ✅ Yes | ✅ Yes (backend only) | The `Ingredient`/`FoodIngredient` tables, the parser, and the synonym-based canonicalization were verified correct against the real 4 seeded foods via direct on-device database inspection. There's no UI to click-test, by design — it's backend plumbing feeding a future insights feature, not a user-facing screen yet. |
+| 9 | Structured ingredient data | ✅ Yes | ✅ Yes (backend only) | The `Ingredient`/`FoodIngredient` tables, the parser, and the synonym-based canonicalization were verified correct against the real 4 seeded foods via direct on-device database inspection. There's no UI to click-test, by design — it's backend plumbing feeding this insights feature, not a user-facing screen itself. |
 | 10 | Structured dose/amount fields | ✅ Yes | ✅ Yes | Food side fully round-tripped this session (value 1, unit "tin (400g)", confirmed via the edit screen, then deleted). Medication side: the dose value field and mg/ml/mcg unit chips were confirmed present and rendering correctly, but no dedicated save round-trip was run for medication dose specifically. |
-| 11 | Photo-based ingredient capture (OCR) | ❌ No | ❌ No | Explicitly deferred/excluded from the implementation batch (needs ML Kit, a new dependency). |
-| 12 | Multi-dog support | ❌ No | ❌ No | Explicitly deferred/excluded — the highest-risk, largest-scope item in this list; not started. |
+| 11 | AI-generated insights v2 (progression + mood/food correlation) | 🧪 Partial | ❌ No | The `crapp-insights` skill was rewritten to cover all 5 export CSVs (previously 3), the two fixed report sections, a data-completeness caveat, and delegating analysis to the strongest available model (`Agent` tool, `model: "opus"`). App-side: `InsightsReport`/`InsightsParser` gained `section`/`dataCompleteness` (schema v2, backward-compatible with v1 files), the Insights screen groups cards by section, and there's now a top-level **Insights** link on Home next to History/Export (previously Settings-only). Not yet run against a real export or click-tested on-device — this was a scoping/plumbing pass, not a full build-and-test cycle. |
+| 12 | Photo-based ingredient capture (OCR) | ❌ No | ❌ No | Explicitly deferred/excluded from the implementation batch (needs ML Kit, a new dependency). |
+| 13 | Multi-dog support | ❌ No | ❌ No | Explicitly deferred/excluded — the highest-risk, largest-scope item in this list; not started. |
 
 The top-of-backlog "Good DevEx and snappy UI design" item isn't a discrete feature to
 implement/test — it's an ongoing engineering principle this project has generally
@@ -399,7 +402,7 @@ Covers *"Reminders/notifications (e.g. 'no movement logged in over 24h')."*
 - **UI:** camera-or-gallery picker button on `BowelMovementLogScreen` (Android's
   built-in `ActivityResultContracts.TakePicture` targeting a `MediaStore`-issued URI, or
   `PickVisualMedia` for an existing photo — no new library dependency needed, unlike
-  spec 11's OCR ask). Thumbnail shown in the History list row and in an entry's edit
+  spec 12's OCR ask). Thumbnail shown in the History list row and in an entry's edit
   view; tap to view full-size.
 - **Backup/restore:** since `photoUri` is now a stable reference into shared storage
   rather than an app-private path, `BackupRepository`/`BackupSerializer` only need to
@@ -487,7 +490,73 @@ Already scoped as deferred-until-justified in the original bullet.
   complexity cost — this spec is ready to go whenever that evidence shows up, likely
   surfaced by `crapp-insights` runs that can't cleanly bucket dose amounts.
 
-### 11. Photo-based ingredient capture (OCR)
+### 11. AI-generated insights v2 (progression + mood/food correlation)
+
+Promotes the original Phase 8 "CSV export -> Claude analysis skill -> in-app
+dashboard upload" feature (bowel/food/medication only, 3 CSVs) to cover all five
+export CSVs and organize findings into two fixed, always-present sections instead of
+one flat list — see `.claude/skills/crapp-insights/SKILL.md` for the authoritative,
+up-to-date workflow this spec summarizes.
+
+- **Why now:** spec 4 (energy logging) and spec 5 (walker-logged walks) both shipped
+  after Phase 8's original insights skill, so two of the app's five export CSVs
+  (`energy_entries.csv`, `walk_entries.csv`) were never covered by it. This spec
+  closes that gap and gives the analysis a real "mood" signal (energy level) to
+  correlate against, which didn't exist yet in Phase 8.
+- **Fixed report sections:** every finding the skill writes is bucketed into exactly
+  one of:
+  1. **Bowel movement progression** — frequency and consistency trends over time,
+     and whether a shift lines up with a food/ingredient change, a feed time
+     relative to movement time, a medication change, or a location/night-time
+     pattern change.
+  2. **Mood, food & bowel correlations** — energy level (`energy_entries.csv`)
+     against food/ingredient changes and against bowel consistency/frequency.
+
+  Both are always rendered (as headings) on the Insights screen when populated, and
+  silently omitted when the data didn't support any finding for that section — never
+  a forced/fabricated entry just to fill the heading.
+- **Data is never complete, by design of how it's collected:** not everyone who
+  walks the dog uses the app, so `walk_entries.csv` is a dog-walker's aggregate
+  count with no per-movement consistency score, and some walk-time movements may be
+  missing from `bowel_movements.csv` entirely. Rather than treating this as a
+  blocker, the skill is required to (a) still fold walk counts into the frequency
+  trend, (b) exclude them from the consistency trend, and (c) say so explicitly in a
+  new `dataCompleteness` field on the report — visible on the Insights screen as a
+  ⚠️ line — instead of silently under- or over-counting.
+- **Model choice:** the skill explicitly delegates the actual progression/
+  correlation reasoning to the strongest available model via a subagent
+  (`Agent` tool, `model: "opus"`), separate from CSV parsing/file-writing which the
+  invoking session does directly. This is a "use the best model in your plan for the
+  reasoning step" requirement, not a fixed model pin — the skill notes to check
+  what's current if it goes stale.
+- **Output:** the skill now writes **two files** per run instead of one — a
+  human-readable `crapp_insights_<date>.md` report (for reading directly, e.g. by
+  email/print) alongside the existing `crapp_insights_<date>.json` (for the app).
+  Both are always written together from the same analysis pass.
+- **Data model (app side):** `InsightsReport` gained `dataCompleteness: String?`;
+  `Insight` gained `section: InsightSection` (`BOWEL_PROGRESSION` /
+  `MOOD_FOOD_CORRELATION` / `OTHER`). Schema bumped to `schemaVersion: 2`, but
+  `InsightsParser` still accepts `1`-tagged files (pre-dating both fields) — an
+  older uploaded report still renders, just entirely under an "Other findings"
+  heading since it predates sections.
+- **UI:** the Insights screen groups `insights` by `section` into three possible
+  headings ("🩺 Bowel movement progression", "🍗 Mood, food & bowel correlations",
+  "Other findings" — each omitted if empty) above the existing trend-series charts,
+  and shows the `dataCompleteness` caveat (if present) right under the summary
+  paragraph. The **Insights** link itself moved from Settings-only to a top-level
+  link on Home next to History and Export — Settings still has its own link too, so
+  neither path was removed, just a faster one added.
+- **Reusability:** re-running the skill against a fresh export and re-uploading the
+  new JSON replaces the previously-uploaded report (`InsightsPreferences` keeps only
+  the most recent one) — a full pass every time, no incremental state to manage, so
+  updating the in-app insights after logging more data is just "export, re-run the
+  skill, re-upload."
+- **Status:** scoped and the schema/screen/nav plumbing is built (see the status
+  table above) — not yet run against a real export or click-tested on-device. Next
+  step is a real run: export CSVs from the app, run the skill, upload the JSON, and
+  confirm the sections/caveat/charts render as designed.
+
+### 12. Photo-based ingredient capture (OCR)
 
 Already scoped as deferred-until-justified in the original bullet; spec captured here
 so it's ready when that justification shows up.
@@ -505,7 +574,7 @@ so it's ready when that justification shows up.
   field's usage first; this spec only becomes worth implementing once that shows
   photo capture would actually save meaningful time over typing/pasting.
 
-### 12. Multi-dog support
+### 13. Multi-dog support
 
 - **Data model:** the big one — introduces a `Dog` entity and a `dogId` FK on
   `bowel_movement`, `food_entry`, `medication_entry`, and any of the new entities
