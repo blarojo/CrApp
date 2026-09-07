@@ -11,6 +11,10 @@ This is a one-shot, offline process — nothing runs inside the app or reads the
 phone directly. You export data from CrApp, hand the files to Claude Code, and
 upload back whatever it produces.
 
+> **On your phone, without a computer?** See
+> [run-insights-mobile.md](run-insights-mobile.md) instead — same idea, but using
+> the Claude phone app directly with a self-contained prompt instead of Claude Code.
+
 ## 1. Export the data from CrApp
 
 1. Open CrApp on your phone.
