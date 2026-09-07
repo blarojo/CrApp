@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Exposes only the cache/exports/ directory CsvExporter writes to (see
-   app/src/main/java/com/crapp/export/CsvExporter.kt) to the FileProvider; nothing
-   else in app-scoped storage is shared.
+   Exposes only specific cache subfolders to the FileProvider; nothing else in
+   app-scoped storage is shared.
+   - exports/: CsvExporter (app/src/main/java/com/crapp/export/CsvExporter.kt).
+   - ocr_scans/: LabelScanStore (app/src/main/java/com/crapp/ocr/LabelScanStore.kt),
+     a disposable label-photo capture target for on-device text recognition
+     (docs/backlog.md spec 12); deleted right after each scan, never kept.
 -->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path name="exports" path="exports/" />
+    <cache-path name="ocr_scans" path="ocr_scans/" />
 </paths>

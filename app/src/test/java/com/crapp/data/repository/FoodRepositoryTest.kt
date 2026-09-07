@@ -112,6 +112,73 @@ class FoodRepositoryTest {
     }
 
     @Test
+    fun addOrUpdateFood_newName_insertsWithAllFields() = runBlocking {
+        val repo = newRepo()
+
+        val id = repo.addOrUpdateFood("Boiled Chicken", brand = "Homemade", ingredients = "Chicken breast")
+
+        val food = repo.getFoodById(id)
+        assertEquals("Boiled Chicken", food?.name)
+        assertEquals("Homemade", food?.brand)
+        assertEquals("Chicken breast", food?.ingredients)
+    }
+
+    @Test
+    fun addOrUpdateFood_withUsualAmount_persistsValueAndUnit() = runBlocking {
+        val repo = newRepo()
+
+        val id = repo.addOrUpdateFood(
+            "HA Wet",
+            brand = "Purina",
+            ingredients = null,
+            usualAmountValue = 1.0,
+            usualAmountUnit = "tin (400g)"
+        )
+
+        val food = repo.getFoodById(id)
+        assertEquals(1.0, food?.usualAmountValue)
+        assertEquals("tin (400g)", food?.usualAmountUnit)
+    }
+
+    @Test
+    fun addOrUpdateFood_existingFoodWithNoUsualAmountYet_fillsItInOnTheSameRow() = runBlocking {
+        val repo = newRepo()
+        val originalId = repo.getOrCreateFood("Z/D")
+
+        val id = repo.addOrUpdateFood("Z/D", brand = null, ingredients = null, usualAmountValue = 50.0, usualAmountUnit = "g")
+
+        assertEquals(originalId, id)
+        val food = repo.getFoodById(id)
+        assertEquals(50.0, food?.usualAmountValue)
+        assertEquals("g", food?.usualAmountUnit)
+    }
+
+    @Test
+    fun addOrUpdateFood_existingNameWithNoIngredientsYet_fillsThemInOnTheSameRow() = runBlocking {
+        val repo = newRepo()
+        // Simulates a food that was only ever auto-created via the log-flow's inline
+        // "Add new" (getOrCreateFood), which never sets ingredients.
+        val originalId = repo.getOrCreateFood("Z/D", brand = "Hill's")
+
+        val id = repo.addOrUpdateFood("Z/D", brand = null, ingredients = "Chicken, water")
+
+        assertEquals(originalId, id)
+        val food = repo.getFoodById(id)
+        assertEquals("Hill's", food?.brand) // untouched, since brand was passed null
+        assertEquals("Chicken, water", food?.ingredients)
+    }
+
+    @Test
+    fun addOrUpdateFood_doesNotCreateADuplicateRowForAnExistingName() = runBlocking {
+        val repo = newRepo()
+        repo.addOrUpdateFood("Z/D", brand = "Hill's", ingredients = "Chicken")
+
+        repo.addOrUpdateFood("Z/D", brand = null, ingredients = "Chicken, updated")
+
+        assertEquals(1, repo.allFoods.first().size)
+    }
+
+    @Test
     fun allFoods_reflectsCatalogInserts() = runBlocking {
         val repo = newRepo()
         repo.getOrCreateFood("Z/D")

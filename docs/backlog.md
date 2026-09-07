@@ -12,7 +12,9 @@ Specs 1–11 from an earlier draft of this file (bowel movement amount, tap-to-i
 adjustable dashboard window, location + night-time, energy logging, walker-logged
 walks, the Wear OS companion app, reminders/notifications, photo attachment,
 structured ingredient data, structured dose/amount fields, and AI-generated
-insights v2), plus **spec 14 (predefined food amount quick-buttons)**, have all
+insights v2), plus **spec 14 (predefined food amount quick-buttons)** and
+**spec 12 (photo-based ingredient capture / OCR, plus the Food Catalog's own
+manual "Add new food" flow and alphabetical ordering that came with it)**, have all
 shipped and been documented as real features — see
 [app-functionality.md](app-functionality.md) for what each one does today and its
 current testing status, and [development-plan.md](development-plan.md) for when each
@@ -29,10 +31,6 @@ up or a new screen introduces an un-keyed list or a main-thread DB call.
 
 ## Other ideas worth considering later
 
-- Photo-based ingredient capture (OCR a label photo) for the Food Catalog, on top of
-  the manual/pasted-text entry already shipped — needs a camera + text-recognition
-  capability (e.g. ML Kit), a real dependency addition, so deferred until the
-  text-entry version shows it's worth the jump. See spec 12 below.
 - Multi-dog support (would require introducing a `Dog` entity and scoping all
   queries). See spec 13 below.
 - A home screen widget for quick-glance counts and one-tap logging, without opening
@@ -42,24 +40,6 @@ up or a new screen introduces an un-keyed list or a main-thread DB call.
 
 Nothing here is scheduled or approved; review and cut/edit before any of these gets
 promoted into `development-plan.md`.
-
-### 12. Photo-based ingredient capture (OCR)
-
-Already scoped as deferred-until-justified in the original bullet; spec captured here
-so it's ready when that justification shows up.
-
-- **Dependency:** ML Kit Text Recognition (on-device, no network call — keeps the
-  app's "no backend, no third-party analytics" constraint intact). Real Gradle
-  dependency addition, consistent with why this was deferred.
-- **UI:** on the Food Catalog "Add new" / edit food flow (`ui/foodcatalog`), add a
-  "scan label" button next to the existing manual/pasted-text `ingredients` field.
-  Opens camera, runs ML Kit text recognition on the captured frame, and pre-fills the
-  `ingredients` text field with the recognized text for the user to review/edit before
-  saving — never auto-saves OCR output unreviewed, since label OCR is commonly noisy.
-- **Data model:** none — writes into the existing `Food.ingredients` free-text field.
-- **Prereq:** per the original note, build and ship the manual-entry `ingredients`
-  field's usage first; this spec only becomes worth implementing once that shows
-  photo capture would actually save meaningful time over typing/pasting.
 
 ### 13. Multi-dog support
 

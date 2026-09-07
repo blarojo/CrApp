@@ -1,21 +1,33 @@
 package com.crapp.ui.foodcatalog
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -30,17 +42,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crapp.data.model.Food
+import com.crapp.data.model.toAmountText
+import com.crapp.ocr.IngredientsTextExtractor
+import com.crapp.ocr.LabelScanStore
+import com.crapp.ui.food.FOOD_AMOUNT_UNITS
+import kotlinx.coroutines.launch
 
 /**
  * Lists the food catalog with its ingredients (docs/development-plan.md Phase 8) --
- * tap a food to add or edit its ingredient list, either pasted from a label or typed
- * manually. Foods pre-seeded on first install already have ingredients filled in.
+ * tap a food to edit its ingredient list (pasted from a label, typed manually, or
+ * scanned) and its usual amount (pre-fills the food-logging screen's amount fields
+ * when that food is selected there, still fully overridable). Foods pre-seeded on
+ * first install already have ingredients filled in.
  *
  * Also supports deleting a food (the "delete old ones" admin flow) -- blocked with
  * an explanatory message if any logged food entry still references it, rather than
@@ -54,6 +76,7 @@ fun FoodCatalogScreen(
 ) {
     val foods by viewModel.foods.collectAsState()
     val editingFood by viewModel.editingFood.collectAsState()
+    val addFoodState by viewModel.addFoodState.collectAsState()
     val pendingDelete by viewModel.pendingDelete.collectAsState()
     val message by viewModel.message.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -72,6 +95,11 @@ fun FoodCatalogScreen(
                 navigationIcon = { TextButton(onClick = onBack) { Text("← Back") } }
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(onClick = viewModel::startAddingNewFood) {
+                Icon(Icons.Filled.Add, contentDescription = "Add food")
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } }
     ) { innerPadding ->
         if (foods.isEmpty()) {
@@ -82,8 +110,8 @@ fun FoodCatalogScreen(
                     .padding(20.dp)
             ) {
                 Text(
-                    "No foods logged yet -- foods you log will show up here so you can add " +
-                        "their ingredients.",
+                    "No foods yet -- tap + to add one (name, brand, ingredients, usual amount), " +
+                        "or log a food entry and it'll show up here automatically.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -107,10 +135,23 @@ fun FoodCatalogScreen(
     }
 
     editingFood?.let { food ->
-        IngredientsEditDialog(
+        EditFoodDialog(
             food = food,
             onDismiss = viewModel::cancelEditing,
-            onSave = viewModel::saveIngredients
+            onSave = viewModel::saveFoodEdits
+        )
+    }
+
+    addFoodState?.let { state ->
+        AddFoodDialog(
+            state = state,
+            onDismiss = viewModel::cancelAddingNewFood,
+            onNameChange = viewModel::onNewFoodNameChange,
+            onBrandChange = viewModel::onNewFoodBrandChange,
+            onIngredientsChange = viewModel::onNewFoodIngredientsChange,
+            onUsualAmountValueTextChange = viewModel::onNewFoodUsualAmountValueTextChange,
+            onUsualAmountUnitChange = viewModel::onNewFoodUsualAmountUnitChange,
+            onSave = viewModel::confirmAddNewFood
         )
     }
 
@@ -138,6 +179,15 @@ private fun FoodCatalogRow(food: Food, onClick: () -> Unit, onDeleteClick: () ->
             ) {
                 Text(food.name, style = MaterialTheme.typography.bodyLarge)
                 food.brand?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                val usualAmountValue = food.usualAmountValue
+                val usualAmountUnit = food.usualAmountUnit
+                if (usualAmountValue != null && usualAmountUnit != null) {
+                    Text(
+                        "Usual amount: ${usualAmountValue.toAmountText()} $usualAmountUnit",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
                     food.ingredients?.takeIf { it.isNotBlank() } ?: "No ingredients recorded -- tap to add",
                     style = MaterialTheme.typography.bodySmall,
@@ -153,27 +203,215 @@ private fun FoodCatalogRow(food: Food, onClick: () -> Unit, onDeleteClick: () ->
 }
 
 @Composable
-private fun IngredientsEditDialog(
+private fun EditFoodDialog(
     food: Food,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (ingredients: String, usualAmountValueText: String, usualAmountUnit: String?) -> Unit
 ) {
-    var text by remember(food.id) { mutableStateOf(food.ingredients.orEmpty()) }
+    var ingredients by remember(food.id) { mutableStateOf(food.ingredients.orEmpty()) }
+    var usualAmountValueText by remember(food.id) { mutableStateOf(food.usualAmountValue?.toAmountText().orEmpty()) }
+    var usualAmountUnit by remember(food.id) { mutableStateOf(food.usualAmountUnit) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(food.name) },
         text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text("Ingredients") },
-                placeholder = { Text("Paste from the label, or type manually") },
-                minLines = 4,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = ingredients,
+                    onValueChange = { ingredients = it },
+                    label = { Text("Ingredients") },
+                    placeholder = { Text("Paste from the label, type manually, or scan below") },
+                    minLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                ScanLabelButton(onTextRecognized = { ingredients = it })
+                UsualAmountFields(
+                    valueText = usualAmountValueText,
+                    unit = usualAmountUnit,
+                    onValueChange = { usualAmountValueText = it },
+                    onUnitChange = { usualAmountUnit = if (usualAmountUnit == it) null else it }
+                )
+            }
         },
-        confirmButton = { TextButton(onClick = { onSave(text) }) { Text("Save") } },
+        confirmButton = {
+            TextButton(onClick = { onSave(ingredients, usualAmountValueText, usualAmountUnit) }) { Text("Save") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+/**
+ * The Food Catalog's own "Add new food" dialog (docs/backlog.md spec 12's
+ * manual-entry addition) -- name + optional brand + optional ingredients + optional
+ * usual amount, all in one place, without needing to log a food entry first (the
+ * only way to create a new catalog row before this). Shares the same "Scan label"
+ * OCR button as [EditFoodDialog].
+ */
+@Composable
+private fun AddFoodDialog(
+    state: AddFoodUiState,
+    onDismiss: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onBrandChange: (String) -> Unit,
+    onIngredientsChange: (String) -> Unit,
+    onUsualAmountValueTextChange: (String) -> Unit,
+    onUsualAmountUnitChange: (String) -> Unit,
+    onSave: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add new food") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = state.name,
+                    onValueChange = onNameChange,
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = state.brand,
+                    onValueChange = onBrandChange,
+                    label = { Text("Brand (optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = state.ingredients,
+                    onValueChange = onIngredientsChange,
+                    label = { Text("Ingredients (optional)") },
+                    placeholder = { Text("Paste from the label, type manually, or scan below") },
+                    minLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                ScanLabelButton(onTextRecognized = onIngredientsChange)
+                UsualAmountFields(
+                    valueText = state.usualAmountValueText,
+                    unit = state.usualAmountUnit,
+                    onValueChange = onUsualAmountValueTextChange,
+                    onUnitChange = onUsualAmountUnitChange
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSave, enabled = state.name.isNotBlank()) { Text("Add") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+/**
+ * Value + unit-chip fields for a food's usual amount, shared by [AddFoodDialog] and
+ * [EditFoodDialog] -- the same [FOOD_AMOUNT_UNITS] vocabulary as the food-logging
+ * screen's own structured-amount fields, so a food's usual amount and an actual log
+ * entry's amount always speak the same unit language.
+ */
+@Composable
+private fun UsualAmountFields(
+    valueText: String,
+    unit: String?,
+    onValueChange: (String) -> Unit,
+    onUnitChange: (String) -> Unit
+) {
+    Text(text = "Usual amount (optional)", style = MaterialTheme.typography.titleSmall)
+    OutlinedTextField(
+        value = valueText,
+        onValueChange = onValueChange,
+        label = { Text("Value") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth()
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FOOD_AMOUNT_UNITS.forEach { u ->
+            FilterChip(
+                selected = unit == u,
+                onClick = { onUnitChange(u) },
+                label = { Text(u) }
+            )
+        }
+    }
+}
+
+/**
+ * A "📷 Scan label" button, shared by [EditFoodDialog] and [AddFoodDialog]:
+ * takes a photo (via the same disposable-`FileProvider`-cache-file pattern as
+ * [com.crapp.ocr.LabelScanStore]'s own KDoc explains), runs on-device text
+ * recognition on it, then runs [IngredientsTextExtractor] to isolate just the
+ * ingredients/composition section from the rest of the label (nutritional info,
+ * weight, address, etc.) before calling [onTextRecognized] -- the caller decides how
+ * to fold that into its own ingredients field (both callers here simply replace it,
+ * matching docs/backlog.md spec 12: "pre-fills ... for the user to review/edit
+ * before saving", never auto-saved unreviewed). Falls back to the full recognized
+ * text, with a heads-up toast, if no ingredients/composition heading is found.
+ */
+@Composable
+private fun ScanLabelButton(onTextRecognized: (String) -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val labelScanStore = remember { LabelScanStore(context) }
+    var pendingScanUri by remember { mutableStateOf<Uri?>(null) }
+    var isScanning by remember { mutableStateOf(false) }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        val uri = pendingScanUri
+        pendingScanUri = null
+        if (success && uri != null) {
+            isScanning = true
+            scope.launch {
+                val result = labelScanStore.recognizeText(uri)
+                labelScanStore.deleteScan(uri)
+                isScanning = false
+                result.fold(
+                    onSuccess = { text ->
+                        if (text.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                "No text found in that photo -- try again with better lighting/focus.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            val ingredientsOnly = IngredientsTextExtractor.extract(text)
+                            if (ingredientsOnly != null) {
+                                onTextRecognized(ingredientsOnly)
+                            } else {
+                                onTextRecognized(text)
+                                Toast.makeText(
+                                    context,
+                                    "Couldn't spot an \"Ingredients\"/\"Composition\" heading -- " +
+                                        "filled in the full scanned text instead, trim as needed.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    },
+                    onFailure = {
+                        Toast.makeText(context, "Couldn't read that photo -- try again.", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        } else if (uri != null) {
+            // Camera was cancelled -- the temp file (if the camera app created one) is disposable anyway.
+            labelScanStore.deleteScan(uri)
+        }
+    }
+
+    OutlinedButton(
+        onClick = {
+            val uri = labelScanStore.createScanCaptureTarget()
+            pendingScanUri = uri
+            takePictureLauncher.launch(uri)
+        },
+        enabled = !isScanning
+    ) {
+        if (isScanning) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                Text("Reading label…")
+            }
+        } else {
+            Text("📷 Scan label")
+        }
+    }
 }
