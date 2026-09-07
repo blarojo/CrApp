@@ -49,7 +49,6 @@ fun CrAppNavHost(
                 onLogEnergy = { navController.navigate(Routes.logEnergy()) },
                 onLogWalk = { navController.navigate(Routes.logWalk()) },
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
-                onExport = { navController.navigate(Routes.EXPORT) },
                 onViewInsights = { navController.navigate(Routes.INSIGHTS) },
                 onSettings = { navController.navigate(Routes.SETTINGS) }
             )
@@ -59,6 +58,7 @@ fun CrAppNavHost(
                 onBack = { navController.popBackStack() },
                 onManageFoodCatalog = { navController.navigate(Routes.FOOD_CATALOG) },
                 onManageMedicationCatalog = { navController.navigate(Routes.MEDICATION_CATALOG) },
+                onExport = { navController.navigate(Routes.EXPORT) },
                 onViewInsights = { navController.navigate(Routes.INSIGHTS) }
             )
         }

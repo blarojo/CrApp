@@ -51,7 +51,6 @@ fun HomeScreen(
     onLogEnergy: () -> Unit,
     onLogWalk: () -> Unit,
     onViewHistory: () -> Unit,
-    onExport: () -> Unit,
     onViewInsights: () -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +65,6 @@ fun HomeScreen(
                 title = { Text("💩 CrApp") },
                 actions = {
                     TextButton(onClick = onViewHistory) { Text("History") }
-                    TextButton(onClick = onExport) { Text("Export") }
                     TextButton(onClick = onViewInsights) { Text("Insights") }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

@@ -53,6 +53,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onManageFoodCatalog: () -> Unit,
     onManageMedicationCatalog: () -> Unit,
+    onExport: () -> Unit,
     onViewInsights: () -> Unit,
     viewModel: SettingsViewModel = viewModel()
 ) {
@@ -120,6 +121,19 @@ fun SettingsScreen(
                     )
                     OutlinedButton(onClick = onManageMedicationCatalog, modifier = Modifier.fillMaxWidth()) {
                         Text("Manage Medications")
+                    }
+                }
+            }
+
+            SettingsSection(title = "Export") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Share ${AppConfig.DOG_NAME}'s logged data as CSV files -- for a vet visit, " +
+                            "or as the input to the Insights analysis below.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedButton(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
+                        Text("Export CSV")
                     }
                 }
             }
