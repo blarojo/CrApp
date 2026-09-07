@@ -20,9 +20,10 @@ features — see [app-functionality.md](app-functionality.md) for what each one 
 today and its current testing status, and
 [development-plan.md](development-plan.md) for when each was built. They've been
 removed from this file since they're no longer "future" — this file now holds only
-what's still pending. (Spec 15 is the one exception worth flagging here: it's
-implemented and unit-tested, but has had **no on-device verification at all yet** —
-see app-functionality.md §14's Testing status entry before assuming it works.)
+what's still pending. (Spec 15 has since been click-tested live on-device too —
+placement, summary numbers, both quick-add buttons, and the reactive refresh path
+all confirmed working; only the hourly midnight-rollover fallback remains
+unobserved live — see app-functionality.md §14's Testing status entry.)
 
 **Good DevEx and snappy UI design**, the one ongoing engineering-principle bullet
 this file used to carry (rather than a discrete feature), has also been acted on and
