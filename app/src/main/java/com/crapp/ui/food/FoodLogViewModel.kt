@@ -20,6 +20,23 @@ import java.time.Instant
 /** Fixed unit choices for [FoodLogUiState.amountUnit] -- docs/backlog.md's dose/amount spec. */
 val FOOD_AMOUNT_UNITS = listOf("cup", "tbsp", "g", "tin (400g)")
 
+/**
+ * A one-tap shortcut that fills both the free-text [FoodLogUiState.amount] and the
+ * structured [FoodLogUiState.amountValueText]/[FoodLogUiState.amountUnit] fields at once,
+ * for the most common portions -- docs/backlog.md spec 14. A small list literal rather than
+ * a catalog/DB table, since it's just two fixed, food-independent shortcuts for now.
+ */
+data class QuickAmount(val label: String, val value: Double, val unit: String)
+
+val FOOD_QUICK_AMOUNTS = listOf(
+    QuickAmount(label = "1 cup", value = 1.0, unit = "cup"),
+    QuickAmount(label = "1 tin (400g)", value = 1.0, unit = "tin (400g)")
+)
+
+/** Renders a whole-number [Double] without a trailing ".0" so a quick-amount tap fills the value field with "1", not "1.0". */
+private fun Double.toAmountValueText(): String =
+    if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
+
 data class FoodLogUiState(
     val timestamp: Instant = Instant.now(),
     val selectedFood: Food? = null,
@@ -89,6 +106,22 @@ class FoodLogViewModel(
 
     fun onAmountUnitChange(unit: String) {
         _uiState.update { it.copy(amountUnit = if (it.amountUnit == unit) null else unit) }
+    }
+
+    /**
+     * Fills the free-text and structured amount fields from a [QuickAmount] shortcut in one
+     * tap. The fields stay directly editable afterwards -- this is just a starting point, not
+     * a locked value; tapping a different shortcut (or the same one again) simply overwrites
+     * whatever's there, same as picking a different amount unit chip does today.
+     */
+    fun onQuickAmountSelected(quickAmount: QuickAmount) {
+        _uiState.update {
+            it.copy(
+                amount = quickAmount.label,
+                amountValueText = quickAmount.value.toAmountValueText(),
+                amountUnit = quickAmount.unit
+            )
+        }
     }
 
     fun onShowAddNewDialog(show: Boolean) {

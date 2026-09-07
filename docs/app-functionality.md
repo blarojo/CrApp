@@ -42,6 +42,17 @@ via Settings).
   alongside the free-text amount, for analysis that needs real numbers instead of
   parsing prose. Round-tripped on-device (value 1, unit "tin (400g)", confirmed via
   the edit screen, then deleted).
+- **Quick-amount buttons** ✅ — two one-tap shortcuts, **"1 cup"** and **"1 tin
+  (400g)"**, above the amount fields for the most common portions. Tapping one fills
+  the free-text amount *and* the structured value/unit fields in one go (e.g. "1 tin
+  (400g)" sets amount = `"1 tin (400g)"`, value = `1`, unit = `"tin (400g)"`); tapping
+  a different shortcut afterward overwrites rather than accumulates, and every field
+  stays directly editable afterward — this is a starting point, not a locked value.
+  Round-tripped on-device: tapped "1 tin (400g)" on a new "Scrambled egg" entry,
+  confirmed both fields filled correctly, saved, and confirmed History shows "Meal ·
+  1 tin (400g)" exactly. Also covered by an instrumented BDD-style UI test
+  (`FoodLoggingFlowTest`) for both the fill and the overwrite-not-accumulate
+  behavior.
 - Food Catalog lets you add/edit a food's ingredients as free text (manual entry or
   pasted from a label). ✅
 - **4 starter foods are pre-seeded** on a brand-new install (Hill's z/d Mini dry,

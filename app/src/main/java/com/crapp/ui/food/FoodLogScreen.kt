@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -127,6 +128,15 @@ fun FoodLogScreen(
                 }
             }
 
+            Text(text = "Amount", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FOOD_QUICK_AMOUNTS.forEach { quickAmount ->
+                    AssistChip(
+                        onClick = { viewModel.onQuickAmountSelected(quickAmount) },
+                        label = { Text(quickAmount.label) }
+                    )
+                }
+            }
             OutlinedTextField(
                 value = uiState.amount,
                 onValueChange = viewModel::onAmountChange,
