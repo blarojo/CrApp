@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val themePreferences = (application as CrAppApplication).themePreferences
         val openLogBowelMovement = intent?.getBooleanExtra(EXTRA_OPEN_LOG_BOWEL_MOVEMENT, false) ?: false
+        val openLogFood = intent?.getBooleanExtra(EXTRA_OPEN_LOG_FOOD, false) ?: false
         setContent {
             val themeMode by themePreferences.themeMode.collectAsState()
             val darkTheme = when (themeMode) {
@@ -26,7 +27,10 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             CrAppTheme(darkTheme = darkTheme) {
-                CrAppNavHost(openBowelMovementLogOnLaunch = openLogBowelMovement)
+                CrAppNavHost(
+                    openBowelMovementLogOnLaunch = openLogBowelMovement,
+                    openFoodLogOnLaunch = openLogFood
+                )
             }
         }
     }
@@ -34,5 +38,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         /** Set by [com.crapp.reminders.ReminderWorker]'s notification tap to deep-link straight into logging. */
         const val EXTRA_OPEN_LOG_BOWEL_MOVEMENT = "open_log_bowel_movement"
+        /** Set by the home screen widget's (docs/backlog.md spec 15) "Add Food" button, mirroring [EXTRA_OPEN_LOG_BOWEL_MOVEMENT]'s pattern. */
+        const val EXTRA_OPEN_LOG_FOOD = "open_log_food"
     }
 }

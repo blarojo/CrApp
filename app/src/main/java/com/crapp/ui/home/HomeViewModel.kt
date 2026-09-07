@@ -11,6 +11,8 @@ import com.crapp.data.model.FoodEntry
 import com.crapp.data.model.Location
 import com.crapp.data.model.MedicationEntry
 import com.crapp.data.model.WalkEntry
+import com.crapp.util.countBowelMovementsToday
+import com.crapp.util.isToday
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -136,7 +138,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         fun Instant.toLocalDate() = atZone(zone).toLocalDate()
-        fun Instant.isToday() = toLocalDate() == today
 
         val allTimestamps = listOf(
             movements.map { it.timestamp },
@@ -199,11 +200,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             .groupingBy { it.timestamp.toLocalDate() }.eachCount()
 
         HomeUiState(
-            bowelMovementsToday = movements.count { it.timestamp.isToday() },
-            foodEntriesToday = foodEntries.count { it.timestamp.isToday() },
-            medicationEntriesToday = medications.count { it.timestamp.isToday() },
-            energyEntriesToday = energyEntries.count { it.timestamp.isToday() },
-            walkEntriesToday = walkEntries.count { it.timestamp.isToday() },
+            bowelMovementsToday = countBowelMovementsToday(movements, walkEntries, zone),
+            foodEntriesToday = foodEntries.count { it.timestamp.isToday(zone) },
+            medicationEntriesToday = medications.count { it.timestamp.isToday(zone) },
+            energyEntriesToday = energyEntries.count { it.timestamp.isToday(zone) },
+            walkEntriesToday = walkEntries.count { it.timestamp.isToday(zone) },
             lastLoggedAt = allTimestamps.maxOrNull(),
             hasAnyEntries = allTimestamps.isNotEmpty(),
             window = window,

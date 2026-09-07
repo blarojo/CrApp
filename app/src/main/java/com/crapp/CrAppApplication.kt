@@ -15,15 +15,18 @@ import com.crapp.data.repository.MedicationRepository
 import com.crapp.data.repository.WalkRepository
 import com.crapp.reminders.ReminderScheduler
 import com.crapp.wear.WearSyncPublisher
+import com.crapp.util.countBowelMovementsToday
+import com.crapp.widget.CrAppWidget
+import com.crapp.widget.WidgetRefreshScheduler
+import com.crapp.widget.computeWidgetTodayCounts
+import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * Simple manual dependency provision -- no DI framework needed at this scale.
@@ -65,13 +68,35 @@ class CrAppApplication : Application() {
         // every change made from the phone side too, not just a watch-triggered
         // insert (which pushes its own immediate update from
         // PhoneWearableListenerService). No-op if no watch is paired -- putDataItem
-        // just queues the update for whenever one next syncs.
+        // just queues the update for whenever one next syncs. Uses
+        // countBowelMovementsToday so a dog-walker-reported walk is folded in here
+        // too, not just individually-logged movements.
         applicationScope.launch {
-            val zone = ZoneId.systemDefault()
-            bowelMovementRepository.allMovements
-                .map { movements -> movements.count { it.timestamp.atZone(zone).toLocalDate() == LocalDate.now(zone) } }
+            combine(
+                bowelMovementRepository.allMovements,
+                walkRepository.allEntries
+            ) { movements, walkEntries -> countBowelMovementsToday(movements, walkEntries) }
                 .distinctUntilChanged()
                 .collect { count -> WearSyncPublisher.pushTodayCount(this@CrAppApplication, count) }
         }
+
+        // Keeps the home screen widget (docs/backlog.md spec 15) current on every
+        // relevant change made from the app itself, same reactive-collector pattern
+        // as the Wear OS sync just above -- an hourly WidgetRefreshWorker fallback
+        // (scheduled below) covers the one case this can't: a local-midnight
+        // rollover with no new data at all.
+        applicationScope.launch {
+            combine(
+                bowelMovementRepository.allMovements,
+                foodRepository.allFoodEntries,
+                energyRepository.allEntries,
+                walkRepository.allEntries
+            ) { movements, foodEntries, energyEntries, walkEntries ->
+                computeWidgetTodayCounts(movements, foodEntries, energyEntries, walkEntries)
+            }
+                .distinctUntilChanged()
+                .collect { CrAppWidget().updateAll(this@CrAppApplication) }
+        }
+        WidgetRefreshScheduler.schedule(this)
     }
 }

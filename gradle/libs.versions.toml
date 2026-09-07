@@ -17,6 +17,7 @@ androidxTestExtJunit = "1.2.1"
 espressoCore = "3.6.1"
 orgJson = "20260814"
 mlkitTextRecognition = "16.0.1"
+glance = "1.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -48,6 +49,9 @@ org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 # docs/backlog.md spec 12: label-photo ingredient capture must not add a network
 # dependency to the app's "no backend" constraint.
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
+# Home screen widget (docs/backlog.md spec 15) -- Compose-based widget API, keeps
+# the same UI toolkit/idiom as the rest of the app rather than classic RemoteViews.
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

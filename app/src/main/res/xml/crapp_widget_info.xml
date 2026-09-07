@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   docs/backlog.md spec 15. updatePeriodMillis is deliberately 0, since refresh is
+   driven by com.crapp.widget.WidgetRefreshScheduler (WorkManager) instead, same
+   reasoning as the Reminders feature's own periodic job (see that scheduler's KDoc).
+   previewImage reuses the real launcher icon rather than the default gray
+   placeholder, so the widget is recognizable in the system picker.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:previewImage="@mipmap/ic_launcher"
+    android:initialLayout="@layout/widget_loading"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_description" />

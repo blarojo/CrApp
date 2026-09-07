@@ -76,6 +76,13 @@ same app, just built with debug settings (which mainly affects build speed and s
 key, not functionality). Come back to Android Studio and hit **Run ▶** again only when
 you have a new version of the code to install.
 
+### Optional: add the home screen widget
+
+No special setup beyond the app being installed — long-press an empty spot on your
+home screen → **Widgets** → **CrApp**, then drag it onto the home screen. See
+[app-functionality.md §14](app-functionality.md#14-home-screen-widget) for what it
+shows and its buttons.
+
 ### Optional: a signed "release" build instead
 
 If you'd rather have a smaller, slightly faster build with no debug overhead (not

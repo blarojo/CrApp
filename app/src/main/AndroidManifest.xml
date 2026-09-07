@@ -59,6 +59,21 @@
                     android:scheme="wear" />
             </intent-filter>
         </service>
+
+        <!-- Home screen widget (docs/backlog.md spec 15): today's summary + quick-add
+             buttons, no app open needed. android:exported must be true: the system
+             (the home launcher / AppWidgetHost, a different process) delivers widget
+             lifecycle broadcasts to this receiver. -->
+        <receiver
+            android:name=".widget.CrAppWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/crapp_widget_info" />
+        </receiver>
     </application>
 
 </manifest>

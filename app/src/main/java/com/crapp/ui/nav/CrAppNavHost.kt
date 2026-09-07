@@ -24,7 +24,8 @@ import com.crapp.ui.walk.WalkLogScreen
 @Composable
 fun CrAppNavHost(
     modifier: Modifier = Modifier,
-    openBowelMovementLogOnLaunch: Boolean = false
+    openBowelMovementLogOnLaunch: Boolean = false,
+    openFoodLogOnLaunch: Boolean = false
 ) {
     val navController = rememberNavController()
 
@@ -33,6 +34,15 @@ fun CrAppNavHost(
     LaunchedEffect(openBowelMovementLogOnLaunch) {
         if (openBowelMovementLogOnLaunch) {
             navController.navigate(Routes.logBowelMovement())
+        }
+    }
+
+    // The home screen widget's "Add Food" button (docs/backlog.md spec 15, see
+    // MainActivity.EXTRA_OPEN_LOG_FOOD) -- same deep-link pattern as the bowel
+    // movement one above.
+    LaunchedEffect(openFoodLogOnLaunch) {
+        if (openFoodLogOnLaunch) {
+            navController.navigate(Routes.logFood())
         }
     }
 
