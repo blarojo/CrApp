@@ -8,7 +8,7 @@ description: Analyze CrApp's exported CSVs (bowel movements, food + ingredients,
 CrApp (see `docs/development-plan.md`) is a personal Android app tracking a dog's
 bowel movements, food, medications, energy levels, and walks. Its Export feature
 (§8) produces five CSVs. This skill turns those into an insights report the app can
-render in-app — see `docs/future-features.md` spec 13 for the full design, and
+render in-app — see `docs/app-functionality.md` §13 for the full design, and
 `docs/development-plan.md` Phase 8 for how the original (bowel/food/medication-only)
 version of this was promoted from an idea to a working feature.
 
@@ -183,7 +183,7 @@ Notes on the schema:
 ## 6. Hand off
 
 Tell the user where both files were written. To view the JSON one: open CrApp ->
-**Insights** (top of the Home screen, next to History and Export, or via Settings)
+**Insights** (top of the Home screen, next to History, or via Settings)
 -> **Upload Report** -> pick the `.json` file. The `.md` file is for reading directly
 — mention it's there too, since not every finding worth writing makes it into a
 short in-app card.

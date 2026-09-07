@@ -11,7 +11,7 @@ version this mirrors.
 
 ## Steps
 
-1. **Export from CrApp**: Home → **Export** → share sheet → choose the Claude app as
+1. **Export from CrApp**: gear icon → **Settings** → **Export CSV** → share sheet → choose the Claude app as
    the share target (if it's not offered directly, save the 5 CSVs somewhere first —
    e.g. Files/Downloads — then attach them to a new Claude chat manually).
 2. **Start a new chat** in the Claude app and pick the **strongest model available on
@@ -28,7 +28,7 @@ version this mirrors.
    file on your phone with a `.json` extension (a plain text/notes app that lets you
    name the file, or your phone's Files app "create file" option both work) and paste
    it in. Name doesn't matter — anything like `crapp_insights.json` is fine.
-6. **Upload it**: CrApp → **Insights** (top of Home, next to History and Export) →
+6. **Upload it**: CrApp → **Insights** (top of Home, next to History) →
    **Upload Report** → pick the file you just saved.
 
 ## The prompt to paste

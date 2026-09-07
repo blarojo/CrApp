@@ -289,8 +289,8 @@ A larger, mixed-scope round:
   correlations); new Insights screen (Settings -> Insights) uploads and renders that
   report as insight cards plus generic line/bar charts, persisted locally via
   `InsightsPreferences` so it's still there next time the app opens.
-  **Superseded by v2** (see future-features.md spec 11 and
-  app-functionality.md §13): the skill now covers all 5 export CSVs (not just 3),
+  **Superseded by v2** (see app-functionality.md §13 — moved there from
+  future-features.md now that it's shipped): the skill now covers all 5 export CSVs (not just 3),
   organizes findings into two fixed sections plus a data-completeness caveat, and
   the Insights link is also on Home now, not just Settings.
 
