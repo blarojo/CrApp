@@ -18,13 +18,13 @@ current testing status, and [development-plan.md](development-plan.md) for when 
 was built. They've been removed from this file since they're no longer "future" —
 this file now holds only what's still pending.
 
-## Backlog
-
-- [ ] **Good DevEx and snappy UI design** — keep the app fast and pleasant to build on
-  and use: quick Gradle build/iteration times, minimal boilerplate, responsive Compose
-  UI with no jank on the logging screens (these get used multiple times a day, so any
-  friction compounds). An ongoing engineering principle rather than a discrete feature
-  to implement/test.
+**Good DevEx and snappy UI design**, the one ongoing engineering-principle bullet
+this file used to carry (rather than a discrete feature), has also been acted on and
+removed from here — see `development-plan.md` §6 ("Build performance" / "UI
+responsiveness") for the concrete Gradle build/configuration-cache changes and the
+Compose-jank audit that came out of it. Being a principle rather than a one-time
+feature, it isn't "done" forever — re-visit it if Gradle iteration time creeps back
+up or a new screen introduces an un-keyed list or a main-thread DB call.
 
 ## Other ideas worth considering later
 
