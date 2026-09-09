@@ -9,6 +9,7 @@ object Routes {
     const val FOOD_CATALOG = "food_catalog"
     const val MEDICATION_CATALOG = "medication_catalog"
     const val INSIGHTS = "insights"
+    const val GALLERY = "gallery"
 
     const val LOG_BOWEL_MOVEMENT_PATTERN = "log_bowel_movement?id={id}"
     const val LOG_FOOD_PATTERN = "log_food?id={id}"

@@ -442,6 +442,89 @@ click-tested live — the test phone was locked at the time — plus the
 still-standing hourly midnight-rollover fallback. See Testing status below for
 the exact list.
 
+## 15. Gallery (photo grid)
+
+docs/backlog.md spec 14. A third top-bar link on Home, next to **History** and
+**Insights** — a 2-column grid of every bowel-movement photo taken so far, newest
+first, so browsing "what did this look like a few weeks ago" is a scroll instead of
+a hunt through History for a 📷 marker. Backed by a dedicated query
+(`BowelMovementDao.observeAllWithPhoto()` — only rows with a non-null `photoUri`,
+ordered by timestamp descending), not a client-side filter over every movement. ✅
+Confirmed on-device: the top bar comfortably fits all three text links plus the
+Settings gear on the same row as the "💩 CrApp" title — no crowding, no overflow
+menu needed.
+
+- **Each card** shows the photo on top (cropped to a square, `ContentScale.Crop`)
+  and a caption below it inside the same card (not text overlaid on the image):
+  date **and time** (deliberately more than the ask's "the date" — Mango can have
+  several movements a day, so date-only would make same-day cards indistinguishable),
+  then "Consistency N" plus amount if set, then location + night tag if either is
+  set (omitted entirely if neither is — same "don't show an empty line" rule used
+  throughout this app's cards). Wording mirrors `HistoryScreen`'s own bowel-movement
+  subtitle rather than inventing new copy; notes and blood/mucus flags are
+  deliberately left off (a gallery card's job is "which day, roughly what
+  happened" — History still covers full detail). The caption-building logic is
+  pulled out as a pure function (`buildGalleryCaption`) specifically so its
+  "what shows, what's omitted" rules are unit-tested (`GalleryCaptionTest`) rather
+  than only checked by eye. ✅ Confirmed on-device with a real logged photo: date/
+  time, consistency + amount, and location all rendered correctly and matched
+  History's own wording for the same entry.
+- **Empty state**: "No photos yet — attach one next time you log a bowel
+  movement." instead of a blank grid. 🧪 Not click-tested live (the test device
+  already has a photographed entry, so the empty state couldn't be triggered
+  without deleting real data) — covered by an instrumented test instead
+  (`GalleryFlowTest`).
+- **Thumbnail decoding is properly downsampled**, not a reused full-resolution
+  decode: `BowelMovementPhotoStore.loadThumbnail()` now does a real two-pass
+  bounded decode (`BitmapFactory.Options.inSampleSize`, computed from the actual
+  image bounds) capped at 480px on the longest side, generalized so both the
+  Gallery grid and the pre-existing 80dp log-screen thumbnail share the same
+  decode path — previously (single-photo era) it decoded every photo at full
+  camera resolution regardless of how small it was drawn, a real memory/jank risk
+  once a grid decodes several at once. `PhotoThumbnail` itself was generalized to
+  take its size from the caller's `Modifier` instead of a hardcoded `.size(80.dp)`
+  internally, so the grid can size it to a `fillMaxWidth().aspectRatio(1f)` cell.
+  ✅ Confirmed on-device — and this fix was caught *because* of that live check:
+  the first on-device pass showed the grid thumbnail as "photo not found" while
+  the full-size viewer (a separate, undownsampled decode path) correctly showed
+  the real photo for the exact same URI. Root cause: `BitmapFactory.decodeStream`
+  always returns `null` in `inJustDecodeBounds` (bounds-only) mode — that's normal,
+  not a failure — but the bounds-pass code treated that null as "the stream
+  couldn't be opened" and bailed out every time. Fixed to read success from
+  `bounds.outWidth`/`outHeight` instead of the decode call's return value;
+  re-verified live after the fix, thumbnail rendering correctly.
+- **A broken/inaccessible photo** (the file was removed outside the app, or a
+  restored backup landed on a different device — same situation spec 8 already
+  flagged) shows a "📷 Photo not found" placeholder instead of spinning forever,
+  in both the grid (`PhotoThumbnail`, which now distinguishes loading/loaded/
+  failed states) and the full-size viewer. This was actually observed live (as a
+  side effect of the bug above, before it was fixed) and behaved exactly as
+  designed — a real, if accidental, confirmation the fallback path works, not
+  just a theoretical one.
+- **Tapping a card** opens the full-size photo in a Compose `Dialog` (not a new
+  screen/route) at its real aspect ratio, undownsampled
+  (`BowelMovementPhotoStore.loadFullSize()`), on a scrim, with the same caption
+  repeated below it. Two ways to close it: `Dialog`'s own default
+  `dismissOnClickOutside = true` (tap outside, the literal ask) and a visible ✕
+  button in the corner (a deliberate addition beyond the ask — tap-outside isn't
+  self-evident to every user, and a modal with no visible way out is a common
+  real complaint). ✅ Both confirmed on-device: tapping the card opens the viewer
+  with the real photo; tapping outside it closes it back to the grid; reopening
+  and tapping the ✕ button closes it the same way.
+- **Not in scope for this version**: tap-to-edit from a gallery card (the existing
+  edit path via History still covers that) and date-range/type filter chips
+  matching History's own (the query already filters to "has a photo", which is
+  all this screen needs).
+- No new data model/migration — reads the same `bowel_movement` table every other
+  bowel-movement feature already does, just with an added `WHERE photoUri IS NOT
+  NULL` query.
+
+**Status: implemented, unit-tested, and click-tested live on a real device** —
+including a real bug (the thumbnail-downsampling logic) caught and fixed during
+that live pass rather than shipped unnoticed. The one gap is the empty state,
+which the test device's existing real data made impossible to trigger live;
+that's covered by an instrumented test instead. See Testing status below.
+
 ## Data model
 
 Tables: `bowel_movement`, `food_entry`, `medication_entry`, `energy_entry`,
@@ -465,6 +548,17 @@ What's still genuinely unverified:
 
 - **Medication structured dose** (§3) — fields render correctly, but no dedicated
   save round-trip has been run for medication dose specifically.
+- **Gallery** (§15) — click-tested live: entry point, grid rendering, correct
+  caption content, the downsampled thumbnail decode (after a real bug in it was
+  caught and fixed during this same live pass), the full-size viewer, and both of
+  its closing affordances (tap-outside and the ✕ button) are all confirmed
+  working on-device with a real photographed entry. The one thing not click-tested
+  live is the empty state (no way to trigger it without deleting the test device's
+  real data) — covered instead by `GalleryFlowTest` (instrumented, not yet run --
+  see the walk-count entry below for why) and, for the pure caption logic,
+  `GalleryCaptionTest` (unit-tested, run and passing). Multi-photo grid layout
+  (2+ cards, actual 2-column wrapping) also wasn't observed live, since the test
+  device currently has only one photographed entry.
 - **Home screen widget** (§14) — click-tested live for most of it, across two
   earlier passes: added via the real system widget picker (correct preview,
   correct description), a genuine 2×2 instance confirmed via `dumpsys appwidget`,

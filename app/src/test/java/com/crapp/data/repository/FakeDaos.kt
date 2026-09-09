@@ -53,10 +53,15 @@ class FakeBowelMovementDao : BowelMovementDao {
 
     override fun observeAll(): StateFlow<List<BowelMovement>> = _all
 
+    override fun observeAllWithPhoto(): StateFlow<List<BowelMovement>> = _withPhoto
+
     override suspend fun getById(id: Long): BowelMovement? = rows[id]
+
+    private val _withPhoto = MutableStateFlow<List<BowelMovement>>(emptyList())
 
     private fun publish() {
         _all.value = rows.values.sortedByDescending { it.timestamp }
+        _withPhoto.value = rows.values.filter { it.photoUri != null }.sortedByDescending { it.timestamp }
     }
 }
 

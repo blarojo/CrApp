@@ -29,6 +29,10 @@ interface BowelMovementDao {
     @Query("SELECT * FROM bowel_movement ORDER BY timestamp DESC")
     fun observeAll(): Flow<List<BowelMovement>>
 
+    /** Only movements with an attached photo, newest first -- backs the Gallery screen (docs/backlog.md spec 14). */
+    @Query("SELECT * FROM bowel_movement WHERE photoUri IS NOT NULL ORDER BY timestamp DESC")
+    fun observeAllWithPhoto(): Flow<List<BowelMovement>>
+
     @Query("SELECT * FROM bowel_movement WHERE id = :id")
     suspend fun getById(id: Long): BowelMovement?
 }

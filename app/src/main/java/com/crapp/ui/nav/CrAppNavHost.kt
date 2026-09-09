@@ -13,6 +13,7 @@ import com.crapp.ui.energy.EnergyLogScreen
 import com.crapp.ui.export.ExportScreen
 import com.crapp.ui.food.FoodLogScreen
 import com.crapp.ui.foodcatalog.FoodCatalogScreen
+import com.crapp.ui.gallery.GalleryScreen
 import com.crapp.ui.history.HistoryScreen
 import com.crapp.ui.home.HomeScreen
 import com.crapp.ui.insights.InsightsScreen
@@ -60,6 +61,7 @@ fun CrAppNavHost(
                 onLogWalk = { navController.navigate(Routes.logWalk()) },
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
                 onViewInsights = { navController.navigate(Routes.INSIGHTS) },
+                onViewGallery = { navController.navigate(Routes.GALLERY) },
                 onSettings = { navController.navigate(Routes.SETTINGS) }
             )
         }
@@ -80,6 +82,9 @@ fun CrAppNavHost(
         }
         composable(Routes.INSIGHTS) {
             InsightsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.GALLERY) {
+            GalleryScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.HISTORY) {
             HistoryScreen(
