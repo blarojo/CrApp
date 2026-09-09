@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 class BowelMovementRepository(private val dao: BowelMovementDao) {
     val allMovements: Flow<List<BowelMovement>> = dao.observeAll()
 
+    /** Only movements with a photo, newest first -- backs the Gallery screen (docs/backlog.md spec 14). */
+    val movementsWithPhoto: Flow<List<BowelMovement>> = dao.observeAllWithPhoto()
+
     suspend fun getById(id: Long): BowelMovement? = dao.getById(id)
 
     suspend fun add(movement: BowelMovement): Long = dao.insert(movement)
